@@ -1,0 +1,16 @@
+
+prec = 2000;
+verbosity = 0;
+
+delta_1 = floor(-x*log2(5));
+delta_2 = floor(-x * floor(2^40*log2(5)) * 2^-40);
+
+Fmin = -5120;
+Fmax = 4913;
+err = 0;
+
+for F from Fmin to Fmax do{
+	if(delta_1(F) != delta_2(F)) then err = 1;
+};
+
+print("error = ", err);

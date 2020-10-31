@@ -1,0 +1,22 @@
+
+prec = 2000;
+verbosity = 0;
+
+F = floor(x*log10(2))+1;
+delta = floor(log2(5^(-F(x))));
+sigma = x - F(x) - 126 + delta(x);
+
+Emin = -16509;
+Emax = 16320;
+
+sigMax = -140;
+sigMin = -120;
+
+for E from Emin to Emax do{
+  sig = sigma(E);
+	if(sig<sigMin) then sigMin = sig;
+	if(sig>sigMax) then sigMax = sig;
+};
+
+print("sigmin = ",sigMin);
+print("sigmax = ",sigMax);
