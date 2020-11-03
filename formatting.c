@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "decomposition.h"
 #include "conversion.h"
 #include "auxFunctions.h"
 
@@ -9,7 +8,7 @@
 
 //string manipulation functions
 
-void reverse_string(char *s, unsigned int size){
+void str_rev(char *s, unsigned int size){
   char tmp;
   int i;
   for(i = 0; i < size/2; i++){
@@ -20,9 +19,8 @@ void reverse_string(char *s, unsigned int size){
 }
 
 void print_string(char *s){
-  while(*s != '\0'){
-    putchar(*s);
-    s++;
+  while(*s){
+    putchar(*s++);
   }
 }
 
@@ -70,7 +68,7 @@ int string_d(int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -97,7 +95,7 @@ int string_ld(long int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -124,7 +122,7 @@ int string_lld(long long int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -143,7 +141,7 @@ int string_u(unsigned int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -160,7 +158,7 @@ int string_lu(long unsigned int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -177,7 +175,7 @@ int string_llu(long long unsigned int a, char *s){
     i++;
   }
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -211,7 +209,7 @@ int string_x(unsigned int n, char *s, int mod){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -243,7 +241,7 @@ int string_lx(long unsigned int n, char *s, int mod){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -275,7 +273,7 @@ int string_llx(long long unsigned int n, char *s, int mod){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -298,7 +296,7 @@ int string_o(unsigned int n, char *s){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -319,7 +317,7 @@ int string_lo(unsigned long int n, char *s){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -340,7 +338,7 @@ int string_llo(unsigned long long int n, char *s){
   s[i] = '0';
   i++;
   s[i] = '\0';
-  reverse_string(s, i);
+  str_rev(s, i);
   return i;
 }
 
@@ -570,7 +568,7 @@ int string_f(double f, char *s, unsigned int decimal){
       s[i+2] = '\0';
       return 2+i;
     }
-   
+
     conversion(&F, &n, E, m);
     char mantissa[40];
     numN = string_lu(n, mantissa);
@@ -628,7 +626,7 @@ int string_f(double f, char *s, unsigned int decimal){
       }
     }
 
-   
+
     else{
       //case number too large
       char err [] = "Error: the argument is too big to be formatted as %f. Use %e or %g instead\n";
@@ -675,7 +673,7 @@ int string_Lf(long double f, char *s, unsigned int decimal){
   if(class == NUMBER){
 
     if(E==0 && m == 0){
-      // number is zero 
+      // number is zero
       s[0] = '0';
       s[1] = '.';
       for(i=0; i<decimal; i++){
@@ -684,7 +682,7 @@ int string_Lf(long double f, char *s, unsigned int decimal){
       s[i+2] = '\0';
       return 2+i;
     }
-   
+
     conversion(&F, &n, E, m);
     char mantissa[40];
     numN = string_lu(n, mantissa);
@@ -744,7 +742,7 @@ int string_Lf(long double f, char *s, unsigned int decimal){
       }
     }
 
-   
+
     else{
       //case number too large
       char err [] = "Error: the argument is too big to be formatted as %f. Use %e or %g instead\n";
@@ -807,7 +805,7 @@ int string_g(double f, char *s, unsigned int decimal){
     pointPos = F+numN;
     if(pointPos>-5 && pointPos<decimal){
       // %f format will be used
-      
+
       if(pointPos<=0){
         // case 0.0...ddd
         s[i] = '0';
@@ -855,9 +853,9 @@ int string_g(double f, char *s, unsigned int decimal){
         }
       }
 
-    
+
       s[i] ='\0';
-      
+
       return i;
     }
     else{
@@ -892,7 +890,7 @@ int string_g(double f, char *s, unsigned int decimal){
         j++;
       }
       s[j] = '\0';
-      
+
       return j;
     }
   }

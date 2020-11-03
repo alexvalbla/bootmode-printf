@@ -5,7 +5,7 @@
 #include <limits.h>
 #include "print.h"
 #include "auxFunctions.h"
-#define SIZE 1000 //adjustable if need be
+#define SIZE 1024 //adjustable if need be
 
 
 
@@ -130,7 +130,7 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
           i++;
         }
         if(decimal > 18) decimal = 18;
-	if(decimal == 0) decimal = 1;
+      	if(decimal == 0) decimal = 1;
         //end of .decimal extraction
       }
       //note that decimal always between 0 and 18

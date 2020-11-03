@@ -4,7 +4,7 @@ typedef enum {SPACE_PADDED = 0, ZERO_PADDED, RIGHT_PADDED} P_mode;
 typedef enum {NO_SIGN = 0, BLANK, SIGN} S_mode;
 //sign flags
 
-void reverse_string(char *s, unsigned int size);
+void str_rev(char *s, unsigned int size);
 
 void print_string(char *s);
 

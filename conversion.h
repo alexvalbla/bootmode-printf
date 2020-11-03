@@ -1,15 +1,22 @@
-static inline int64_t decimal_exponent(int32_t E);
+typedef union{
+  float f;
+  uint32_t i;
+} fltcst_t;
 
-static inline int32_t Delta(int64_t F);
+typedef union{
+  double f;
+  uint64_t i;
+} dblcst_t;
 
-static inline int64_t Sigma(int32_t E, int64_t F, int32_t delta);
+typedef union{
+  long double f;
+  __uint128_t i;
+} longdblcst_t;
 
-void mutiplyM(int64_t F, uint64_t m,  __uint128_t *nHigh, __uint128_t *nMid, __uint128_t *nLow);
+typedef enum {NUMBER = 0, NAN, POS_INF, NEG_INF} fpclass_t;
 
-__uint128_t decimalMantissa(int64_t F, uint64_t m, int32_t E);
+fpclass_t decomposeDouble(int *s, int32_t *E, uint64_t *m, double x);
+
+fpclass_t decomposeLongDouble(int *s, int32_t *E, uint64_t *m, long double x);
 
 void conversion(int64_t *F, __uint128_t *n, int32_t E, uint64_t m);
-
-int Tau(int64_t F, int Fh, int Fl);
-
-void optimalT(int64_t F, uint64_t *tHigh, uint64_t *tLow);
