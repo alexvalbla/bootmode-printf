@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include "print.h"
-#include "auxFunctions.h"
+#include "formatting.h"
 #define SIZE 1024 //adjustable if need be
 
 
@@ -17,7 +17,7 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
   unsigned int k;//auxiliary when needed
   unsigned int decimal;//floating point formats
   unsigned int acc = 0;//for necessary nb of characters
-  char tmp[40];//arg conversions
+  char tmp[350];//arg conversions
   char arg[5];//format modifiers
 
   //FLAGS:
@@ -37,12 +37,12 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
   //exit cases
   if(str == NULL && size != 0){
     char err[] = "Error: cannot write on a null string.\n";
-    print_string(err);
+    PUTS(err);
     return 0;
   }
   if(format == NULL){
     char err[] = "Error: format not specified.\n";
-    print_string(err);
+    PUTS(err);
     return 0;
   }
 
@@ -212,19 +212,19 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
         if(arg[0] == 'l'){
           //cases: u,d,o,x,X
           if(format[i] == 'u'){
-            length = string_lu(va_arg(ap, unsigned long), tmp);
+            length = string_u(va_arg(ap, unsigned long), tmp);
           }
           else if(format[i] == 'd'){
-            length = string_ld(va_arg(ap, long), tmp);
+            length = string_d(va_arg(ap, long), tmp);
           }
           else if(format[i] == 'o'){
-            length = string_lo(va_arg(ap, unsigned long), tmp);
+            length = string_o(va_arg(ap, unsigned long), tmp);
           }
           else if(format[i] == 'x'){
-            length = string_lx(va_arg(ap, unsigned long), tmp, 0);
+            length = string_x(va_arg(ap, unsigned long), tmp, 0);
           }
           else if(format[i] == 'X'){
-            length = string_lx(va_arg(ap, unsigned long), tmp, 1);
+            length = string_x(va_arg(ap, unsigned long), tmp, 1);
           }
           else{
             goto BAD_FORMAT;
@@ -279,19 +279,19 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
         //long double -> %Le or %Lf
         if(arg[0] == 'l' && arg[1] == 'l'){
           if(format[i] == 'u'){
-            length = string_llu(va_arg(ap, unsigned long long), tmp);
+            length = string_u(va_arg(ap, unsigned long long), tmp);
           }
           else if(format[i] == 'd'){
-            length = string_lld(va_arg(ap, long long), tmp);
+            length = string_d(va_arg(ap, long long), tmp);
           }
           else if(format[i] == 'o'){
-            length = string_llo(va_arg(ap, unsigned long long), tmp);
+            length = string_o(va_arg(ap, unsigned long long), tmp);
           }
           else if(format[i] == 'x'){
-            length = string_llx(va_arg(ap, unsigned long long), tmp, 0);
+            length = string_x(va_arg(ap, unsigned long long), tmp, 0);
           }
           else if(format[i] == 'X'){
-            length = string_llx(va_arg(ap, unsigned long long), tmp, 1);
+            length = string_x(va_arg(ap, unsigned long long), tmp, 1);
           }
           else{
             goto BAD_FORMAT;
@@ -530,7 +530,7 @@ int VSNPRINTF(char *str, size_t size, const char *format, va_list ap){
   error_message[t] = format[i];
   error_message[t+1] = '\n';
   error_message[t+2] = '\0';
-  print_string(error_message);
+  PUTS(error_message);
   str[0] = '\0';
   return 0;
 }
@@ -548,7 +548,7 @@ int VSPRINTF(char *str, const char *format, va_list ap){
 int VFPRINTF(FILE *stream, const char *format, va_list ap){
   if(stream == NULL){
     char err[] = "Error: cannot write on a NULL file or stream.\n";
-    print_string(err);
+    PUTS(err);
     return 0;
   }
   int res;
@@ -577,10 +577,10 @@ int VPRINTF(const char *format, va_list ap){
   if(res>=SIZE){
     char *str = (char *)alloca((res+1)*sizeof(char));
     VSNPRINTF(str, res+1, format, aq);
-    print_string(str);
+    PUTS(str);
   }
   else{
-    print_string(buff);
+    PUTS(buff);
   }
   va_end(aq);
   return res;

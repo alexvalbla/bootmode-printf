@@ -1,47 +1,51 @@
+#ifndef FORMATTING
+#define FORMATTING
+
+#include "conversion.h"
+
 typedef enum {SPACE_PADDED = 0, ZERO_PADDED, RIGHT_PADDED} P_mode;
 //for padding in case of specified field length
 
 typedef enum {NO_SIGN = 0, BLANK, SIGN} S_mode;
 //sign flags
 
-void str_rev(char *s, unsigned int size);
+void str_rev(char *s, size_t sz);
 
-void print_string(char *s);
+void PUTS(char *s);
 
 void string_s(char *s, char *str, unsigned int strIndex, P_mode Padding_F, unsigned int length, unsigned int padding_length);
 
-int string_d(int a, char *s);
+int string_d(int64_t a, char *s);
 
-int string_ld(long int a, char *s);
+int string_u(uint64_t a, char *s);
 
-int string_lld(long long int a, char *s);
+int string_x(uint64_t a, char *s, int mod);
 
-int string_u(unsigned int a, char *s);
+int string_o(uint64_t a, char *s);
 
-int string_lu(long unsigned int a, char *s);
 
-int string_llu(long long unsigned int a, char *s);
+int fp_special_case(fpclass_t class, char *str);
 
-int string_x(unsigned int n, char *s, int mod);
 
-int string_lx(long unsigned int n, char *s, int mod);
+int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F);
 
-int string_llx(long long unsigned int n, char *s, int mod);
+int string_e(double f, char *str, unsigned int prec);
 
-int string_o(unsigned int n, char *s);
+int string_Le(long double f, char *str, unsigned int prec);
 
-int string_lo(unsigned long int n, char *s);
 
-int string_llo(unsigned long long int n, char *s);
-
-int string_e(double f, char *s, unsigned int decimal);
-
-int string_Le(long double f, char *s, unsigned int decimal);
+int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F);
 
 int string_f(double f, char *s, unsigned int decimal);
 
 int string_Lf(long double f, char *s, unsigned int decimal);
 
+
+int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F);
+
 int string_g(double f, char *s, unsigned int decimal);
 
 int string_Lg(long double f, char *s, unsigned int decimal);
+
+
+#endif

@@ -22,7 +22,7 @@ fpclass_t decomposeDouble(int *s, int32_t *E, uint64_t *m, double x){
     if(*E != 0){
       //x is normalized
       *E = *E - 1023 - 52;
-      *m = *m + ((uint64_t)1<<52); //implicit 1
+      *m = *m + (((uint64_t)1)<<52); //implicit 1
     }
     else{
       //binary exponent is zero: x is denormalized or zero
@@ -221,10 +221,10 @@ __uint128_t decimalMantissa(int64_t F, uint64_t m, int32_t E){
   else{
     nHigh >>= (shift-128);
   }
-  return nHigh;
+  return (uint64_t)nHigh;
 }
 
-void adjustMantissa(int32_t *E, uint64_t *m){
+void adjust_m(int32_t *E, uint64_t *m){
   //we want 2^63 <= m < 2^64
   if(*m < (((uint64_t)1) << 63)){
     if(*m < (((uint64_t)1) << 32)){
@@ -254,8 +254,35 @@ void adjustMantissa(int32_t *E, uint64_t *m){
   }
 }
 
-void conversion(int64_t *F, __uint128_t *n, int32_t E, uint64_t m){
-  adjustMantissa(&E, &m);
+void adjust_n_and_F(__uint128_t *n, int32_t *F){
+  //we want 10^18 <= n < 10^19
+  if(*n >= (uint64_t)10000000000000000000u){
+    //n >= 10^19
+    int r = (*n)%10;
+    *n /= 10;
+    (*F)++;
+    if(r >= 5){
+      //the last digit was >= 5
+      //the round up
+      (*n)++;
+      if(*n >= (uint64_t)10000000000000000000u){
+        //if by rounding we again have n >= 10^19
+        //we again impose n < 10^19
+        *n /= 10;
+        (*F)++;
+      }
+    }
+  }
+  else if(*n < (uint64_t)1000000000000000000u){
+    //n < 10^18
+    *n *= 10;
+    (*F)--;
+  }
+}
+
+void decimalConversion(int32_t *F, __uint128_t *n, int32_t E, uint64_t m){
+  adjust_m(&E, &m);
   *F = decimalExponent(E);
   *n = decimalMantissa(*F, m, E);
+  adjust_n_and_F(n, F);
 }

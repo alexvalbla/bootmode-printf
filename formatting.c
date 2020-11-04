@@ -2,23 +2,26 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "conversion.h"
-#include "auxFunctions.h"
+#include "formatting.h"
 
 
 
 //string manipulation functions
 
-void str_rev(char *s, unsigned int size){
-  char tmp;
-  int i;
-  for(i = 0; i < size/2; i++){
-    tmp = s[i];
-    s[i] = s[size-i-1];
-    s[size-i-1] = tmp;
+void str_rev(char *s, size_t sz){
+  if(sz <= 1)
+    return;
+  char *p = &s[sz-1];
+  while(s < p){
+    *s ^= *p;
+    *p ^= *s;
+    *s ^= *p;
+    s++;
+    p--;
   }
 }
 
-void print_string(char *s){
+void PUTS(char *s){
   while(*s){
     putchar(*s++);
   }
@@ -45,298 +48,102 @@ void string_s(char *s, char *str, unsigned int strIndex, P_mode Padding_F, unsig
 
 //integer type to string conversion functions
 
-int string_d(int a, char *s){
+int string_d(int64_t a, char *s){
   if(a == 0){
     s[0] = '0';
     s[1] = '\0';
     return 1;
   }
-  unsigned int b;
-  unsigned int i=0, neg=0;
+  uint64_t b;
+  int neg = 0;
   if(a < 0){
     b = -a;
     neg = 1;
   }
-  else b = a;
+  else{
+    b = a;
+  }
+  int i = 0;
   while(b != 0){
-    s[i] = '0'+(b%10);
+    s[i++] = '0'+b%10;
     b /= 10;
-    i++;
   }
-  if(neg){
-    s[i] = '-';
-    i++;
-  }
+  if(neg)
+    s[i++] = '-';
   s[i] = '\0';
   str_rev(s, i);
   return i;
 }
 
-int string_ld(long int a, char *s){
+
+//octal unsigned
+
+int string_u(uint64_t a, char *s){
   if(a == 0){
     s[0] = '0';
     s[1] = '\0';
     return 1;
   }
-  unsigned int i=0, neg=0;
-  unsigned long int b;
-  if(a < 0){
-    b = -a;
-    neg = 1;
-  }
-  else b = a;
-  while(b != 0){
-    s[i] = '0'+(b%10);
-    b /= 10;
-    i++;
-  }
-  if(neg){
-    s[i] = '-';
-    i++;
-  }
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
-
-int string_lld(long long int a, char *s){
-  if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int i=0, neg=0;
-  unsigned long long int b;
-  if(a < 0){
-    b = -a;
-    neg = 1;
-  }
-  else b = a;
-  while(b != 0){
-    s[i] = '0'+(b%10);
-    b /= 10;
-    i++;
-  }
-  if(neg){
-    s[i] = '-';
-    i++;
-  }
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
-
-//unsigned
-
-int string_u(unsigned int a, char *s){
-  if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int i=0;
+  int i = 0;
   while(a != 0){
-    s[i] = '0'+(a%10);
+    s[i++] = '0'+a%10;
     a /= 10;
-    i++;
   }
   s[i] = '\0';
   str_rev(s, i);
   return i;
 }
 
-int string_lu(long unsigned int a, char *s){
-  if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  int i=0;
-  while(a!=0){
-    s[i] = '0'+(a%10);
-    a /= 10;
-    i++;
-  }
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
-
-int string_llu(long long unsigned int a, char *s){
-  if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  int i=0;
-  while(a!=0){
-    s[i] = '0'+(a%10);
-    a /= 10;
-    i++;
-  }
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
 
 //hexadecimal unsigned
 
-int string_x(unsigned int n, char *s, int mod){
-  if(n == 0){
+int string_x(uint64_t a, char *s, int mod){
+  if(a == 0){
     s[0] = '0';
     s[1] = '\0';
     return 1;
   }
-  unsigned int i = 0;
-  unsigned int c;
-  unsigned int tmp;
-  if(mod == 1) tmp = 'A';
-  else tmp = 'a';
-  while(n != 0){
-    c = n&((1u<<4)-1);
-    n >>=4;
-    if(c<10){
-      s[i] = '0'+c;
-    }
-    else{
-      s[i] = tmp+c-10;
-    }
-    i++;
+  int tmp = 'a';
+  if(mod == 1)
+    tmp = 'A';
+  int i = 0;
+  int h;
+  while(a != 0){
+    h = a&15u;
+    a >>= 4;
+    if(h < 10)
+      s[i++] = '0'+h;
+    else
+      s[i++] = tmp+h;
   }
-  if(mod == 1) s[i] = 'X';
-  else s[i] = 'x';
-  i++;
-  s[i] = '0';
-  i++;
+  if(mod == 1)
+    s[i++] = 'X';
+  else
+    s[i++] = 'x';
+  s[i++] = '0';
   s[i] = '\0';
   str_rev(s, i);
   return i;
 }
 
-int string_lx(long unsigned int n, char *s, int mod){
-  if(n == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int i = 0;
-  unsigned int c;
-  unsigned int tmp;
-  if(mod == 1) tmp = 'A';
-  else tmp = 'a';
-  while(n != 0){
-    c = n&((1u<<4)-1);
-    n >>=4;
-    if(c<10){
-      s[i] = '0'+c;
-    }
-    else{
-      s[i] = tmp+c-10;
-    }
-    i++;
-  }
-  if(mod == 1) s[i] = 'X';
-  else s[i] = 'x';
-  i++;
-  s[i] = '0';
-  i++;
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
 
-int string_llx(long long unsigned int n, char *s, int mod){
-  if(n == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int i = 0;
-  unsigned int c;
-  unsigned int tmp;
-  if(mod == 1) tmp = 'A';
-  else tmp = 'a';
-  while(n != 0){
-    c = n&((1u<<4)-1);
-    n >>=4;
-    if(c<10){
-      s[i] = '0'+c;
-    }
-    else{
-      s[i] = tmp+c-10;
-    }
-    i++;
-  }
-  if(mod == 1) s[i] = 'X';
-  else s[i] = 'x';
-  i++;
-  s[i] = '0';
-  i++;
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
 
 // octal unsigned
 
-int string_o(unsigned int n, char *s){
-  if(n==0){
+int string_o(uint64_t a, char *s){
+  if(a==0){
     s[0] = '0';
     s[1] = '\0';
     return 1;
   }
-  unsigned int oct;
-  unsigned int i = 0;
-  while (n != 0){
-    oct = n&(8u-1);
-    s[i] = '0'+oct;
-    i++;
-    n >>= 3;
+  int o;
+  int i = 0;
+  while (a != 0){
+    o = a&7u;
+    s[i++] = '0'+o;
+    a >>= 3;
   }
-  s[i] = '0';
-  i++;
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
-
-int string_lo(unsigned long int n, char *s){
-  if(n==0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int oct;
-  unsigned int i = 0;
-  while (n != 0){
-    oct = n&(8u-1);
-    s[i] = '0'+oct;
-    i++;
-    n >>= 3;
-  }
-  s[i] = '0';
-  i++;
-  s[i] = '\0';
-  str_rev(s, i);
-  return i;
-}
-
-int string_llo(unsigned long long int n, char *s){
-  if(n==0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
-  }
-  unsigned int oct;
-  unsigned int i=0;
-  while (n!=0){
-    oct = n&(8u-1);
-    s[i] = '0'+oct;
-    i++;
-    n >>= 3;
-  }
-  s[i] = '0';
-  i++;
+  s[i++] = '0';
   s[i] = '\0';
   str_rev(s, i);
   return i;
@@ -347,709 +154,391 @@ int string_llo(unsigned long long int n, char *s){
 //exponent format
 //6 decimals by default, 18 max
 
-int string_e(double f, char *s, unsigned int decimal){
-  int sign, E, i, j=0, numN;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
+int string_e(double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeDouble(&sign, &E, &m, f);
+  class = decomposeDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if(E == 0 && m == 0){
-      s[0] = '0';
-      s[1] = '\0';
-      return 1;
-    }
-    conversion(&F, &n, E, m);
-    char N[25];//mantissa
-    char e[25];//exponent
-    numN = string_lu(n, N);
-    F += numN-1;//result of point replacement
-    string_d(F,e);
-
-    if(sign){
-      s[j] = '-';
-      j++;
-    }
-
-    s[j] = N[0];
-    j++;
-    s[j] = '.';
-    j++;
-    for(i=1; i <= decimal; i++){
-      if(N[i] == '\0'){
-        break;
-      }
-      s[j] = N[i];
-      j++;
-    }
-    while(i <= decimal){
-      s[j] = '0';
-      j++;
-      i++;
-    }
-
-    s[j] = 'e';
-    j++;
-    i=0;
-
-    if(e[0] != '-'){
-      s[j] = '+';
-      j++;
-      if(e[1] == '\0'){
-        s[j] = '0';
-        j++;
-      }
-    }
-    else{
-      s[j] = '-';
-      i++;
-      j++;
-      if(e[2] == '\0'){
-        s[j] = '0';
-        j++;
-      }
-    }
-
-    while(e[i]){
-      s[j] = e[i];
-      i++;
-      j++;
-    }
-    s[j] = '\0';
-    return j;
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_e(str, prec, s, n, F);
   }
-
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
-  }
-  return 0;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
 }
 
-int string_Le(long double f, char *s, unsigned int decimal){
-  //6 decimals by default , 18 max CONTAINS BUGS!
-  int sign, E,i, j=0, numN;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
+int string_Le(long double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeLongDouble(&sign, &E, &m, f);
+  class = decomposeLongDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if(E == 0 && m == 0){
-      s[0] = '0';
-      s[1] = '\0';
-      return 1;
-    }
-    conversion(&F, &n, E, m);
-    char N[25];//mantissa
-    char e[25];//exponent
-    numN = string_lu(n,N);
-    F += numN-1;// result of point replacement
-    string_d(F,e);
-
-    if(sign){
-      s[j] = '-';
-      j++;
-    }
-
-    s[j] = N[0];
-    j++;
-    s[j] = '.';
-    j++;
-    for(i=1; i<=decimal; i++){
-      if(N[i] == '\0'){
-        break;
-      }
-      s[j] = N[i];
-      j++;
-    }
-    while(i <= decimal){
-      s[j] = '0';
-      j++;
-      i++;
-    }
-
-    s[j] = 'e';
-    j++;
-    i=0;
-    if(e[0] != '-'){
-      s[j] = '+';
-      j++;
-      if(e[1] == '\0'){
-        s[j] = '0';
-        j++;
-      }
-    }
-    else{
-      s[j] = '-';
-      i++;
-      j++;
-      if(e[2] == '\0'){
-        s[j] = '0';
-        j++;
-      }
-    }
-
-    while(e[i]){
-      s[j] = e[i];
-      i++;
-      j++;
-    }
-    s[j] = '\0';
-    return j;
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_e(str, prec, s, n, F);
   }
-
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
-  }
-  return 0;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
 }
 
 //floating point format
 //do not use for values greater than +/-10^(-19)
 
-int string_f(double f, char *s, unsigned int decimal){
-  int sign, E, i, j ,numN, pointPos;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
+int string_f(double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeDouble(&sign, &E, &m, f);
-
+  class = decomposeDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if((E==0 && m==0) || E <= -132){
-      // number is zero
-      s[0] = '0';
-      s[1] = '.';
-      for(i=0; i<decimal; i++){
-        s[i+2] = '0';
-      }
-      s[i+2] = '\0';
-      return 2+i;
-    }
-
-    conversion(&F, &n, E, m);
-    char mantissa[40];
-    numN = string_lu(n, mantissa);
-    i = 0;
-    if(sign){
-      s[i] = '-';
-      i++;
-    }
-
-    //three cases
-    pointPos = F+numN;
-    if(pointPos<=0){
-      // case 0.0...ddd
-      s[i] = '0';
-      i++;
-      s[i] = '.';
-      i++;
-      while(pointPos!=0){
-        s[i] = '0';
-        i++;
-        pointPos++;
-	if(decimal>0){
-	decimal--;
-	}
-      }
-      j = 0;
-      while(j<decimal){
-        if(j>=numN){
-          s[i] = '0';
-        }
-        else{
-          s[i] = mantissa[j];
-        }
-        i++;
-        j++;
-      }
-    }
-    else if(pointPos>0&&pointPos<=20){
-      pointPos+=sign;
-      // case ddd.ddd
-      j = 0;
-      while(j<decimal+pointPos){
-        if(i == pointPos){
-          s[i] = '.';
-          i++;
-        }
-        if(j<numN){
-          s[i] = mantissa[j];
-        }
-        else{
-          s[i] = '0';
-        }
-        i++;
-        j++;
-      }
-    }
-
-
-    else{
-      //case number too large
-      char err [] = "Error: the argument is too big to be formatted as %f. Use %e or %g instead\n";
-      print_string(err);
-      s[0] = '\0';
-    }
-    s[i] = '\0';
-    return i;
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_f(str, prec, s, n, F);
   }
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
-  }
-  return 0;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
 }
 
-int string_Lf(long double f, char *s, unsigned int decimal){
-  int sign, E, i, j ,numN, pointPos;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
-
+int string_Lf(long double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeLongDouble(&sign, &E, &m, f);
-
+  class = decomposeLongDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if(E==0 && m == 0){
-      // number is zero
-      s[0] = '0';
-      s[1] = '.';
-      for(i=0; i<decimal; i++){
-        s[i+2] = '0';
-      }
-      s[i+2] = '\0';
-      return 2+i;
-    }
-
-    conversion(&F, &n, E, m);
-    char mantissa[40];
-    numN = string_lu(n, mantissa);
-    i = 0;
-    if(sign){
-      s[i] = '-';
-      i++;
-    }
-
-    //three cases
-    pointPos = F+numN;
-    if(pointPos <= 0){
-      // case 0.0...ddd
-      s[i] = '0';
-      i++;
-      s[i] = '.';
-      i++;
-      while(pointPos!=0){
-        s[i] = '0';
-        i++;
-        pointPos++;
-		if(decimal>0){
-	decimal--;
-	}
-      }
-
-      j = 0;
-      while(j<decimal){
-        if(j>=numN){
-          s[i] = '0';
-        }
-        else{
-          s[i] = mantissa[j];
-        }
-        i++;
-        j++;
-      }
-
-    }
-    else if(pointPos>0 &&pointPos<=20){
-      // case ddd.ddd
-      pointPos+=sign;
-      j = 0;
-      while(j<decimal+pointPos){
-        if(i == pointPos){
-          s[i] = '.';
-          i++;
-        }
-        if(j<numN){
-          s[i] = mantissa[j];
-        }
-        else{
-          s[i] = '0';
-        }
-        i++;
-        j++;
-      }
-    }
-
-
-    else{
-      //case number too large
-      char err [] = "Error: the argument is too big to be formatted as %f. Use %e or %g instead\n";
-      print_string(err);
-      s[0] = '\0';
-    }
-    s[i] = '\0';
-    return i;
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_f(str, prec, s, n, F);
   }
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
-  }
-  return 0;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
 }
 
 //general format
 
-int string_g(double f, char *s, unsigned int decimal){
-  int sign, E, i, j ,numN, pointPos;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
+int string_g(double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeDouble(&sign, &E, &m, f);
-
+  class = decomposeDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if(E == 0 && m == 0){
-      s[0] = '0';
-      s[1] = '\0';
-      return 1;
-    }
-    conversion(&F, &n, E, m);
-    char mantissa[40];
-    numN = string_lu(n, mantissa);
-    i = 0;
-    if(sign){
-      s[i] = '-';
-      i++;
-    }
-    pointPos = F+numN;
-    if(pointPos>-5 && pointPos<decimal){
-      // %f format will be used
-
-      if(pointPos<=0){
-        // case 0.0...ddd
-        s[i] = '0';
-        i++;
-        s[i] = '.';
-        i++;
-        while(pointPos!=0){
-          s[i] = '0';
-          i++;
-          pointPos++;
-	  if(decimal>0){
-	    decimal--;
-	  }
-        }
-        j = 0;
-        while(j<decimal){
-          if(j>=numN){
-            s[i] = '0';
-          }
-          else{
-            s[i] = mantissa[j];
-          }
-          i++;
-          j++;
-        }
-      }
-
-      else if(pointPos>0 && pointPos<=20){
-        // case ddd.ddd
-        pointPos+=sign;
-        j = 0;
-        while(j<decimal+pointPos){
-          if(i == pointPos){
-            s[i] = '.';
-            i++;
-          }
-          if(j<numN){
-            s[i] = mantissa[j];
-          }
-          else{
-            s[i] = '0';
-          }
-          i++;
-          j++;
-        }
-      }
-
-
-      s[i] ='\0';
-
-      return i;
-    }
-    else{
-      // %e format will be used
-      F += numN-1;
-      char exponent[20];
-      string_ld(F, exponent);
-      j=0;
-      if(sign){
-        s[j] = '-';
-        j++;
-      }
-      s[j] = mantissa[0];
-      j++;
-      s[j] = '.';
-      j++;
-      for(i=1; i<=decimal; i++){
-        if(mantissa[i] == '\0'){
-          s[j] = '0';
-        }
-        else{
-          s[j] = mantissa[i];
-        }
-        j++;
-      }
-      s[j] = 'e';
-      j++;
-      i=0;
-      while(exponent[i]){
-        s[j] = exponent[i];
-        i++;
-        j++;
-      }
-      s[j] = '\0';
-
-      return j;
-    }
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_g(str, prec, s, n, F);
   }
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
-  }
-  return 0;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
 }
 
-int string_Lg(long double f, char *s, unsigned int decimal){
-  int sign, E, i, j ,numN, pointPos;
-  int64_t F;
-  uint64_t m;
-  __uint128_t n;
+int string_Lg(long double f, char *str, unsigned int prec){
+  int s; //sign
+  int32_t E; //binary exponent
+  uint64_t m; //binary mantissa
+  int32_t F; //decimal exponent
+  __uint128_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeLongDouble(&sign, &E, &m, f);
-
+  class = decomposeLongDouble(&s, &E, &m, f);
   if(class == NUMBER){
-
-    if(E == 0 && m == 0){
-      s[0] = '0';
-      s[1] = '\0';
-      return 1;
-    }
-    conversion(&F, &n, E, m);
-    char mantissa[40];
-    numN = string_lu(n, mantissa);
-    i = 0;
-    if(sign){
-      s[i] = '-';
-      i++;
-    }
-    pointPos = F+numN;
-    if(pointPos>-5 && pointPos<decimal){
-      // %f format will be used
-      if(pointPos<=0){
-        // case 0.0...ddd
-        s[i] = '0';
-        i++;
-        s[i] = '.';
-        i++;
-        while(pointPos!=0){
-          s[i] = '0';
-          i++;
-          pointPos++;
-	  if(decimal>0){
-	    decimal--;
-	  }
-        }
-        j = 0;
-        while(j<decimal){
-          if(j>=numN){
-            s[i] = '0';
-          }
-          else{
-            s[i] = mantissa[j];
-          }
-          i++;
-          j++;
-        }
-      }
-      else if(pointPos>0 && pointPos<=20){
-        // case ddd.ddd
-        pointPos+=sign;
-        j = 0;
-        while(j<decimal+pointPos){
-          if(i == pointPos){
-            s[i] = '.';
-            i++;
-          }
-          if(j<numN){
-            s[i] = mantissa[j];
-          }
-          else{
-            s[i] = '0';
-          }
-          i++;
-          j++;
-        }
-      }
-
-      s[i] = '\0';
-      return i;
-    }
-    else{
-      // %e format will be used
-      F += numN-1;
-      char exponent[20];
-      string_ld(F, exponent);
-      j = 0;
-      if(sign){
-        s[j] = '-';
-        j++;
-      }
-      s[j] = mantissa[0];
-      j++;
-      s[j] = '.';
-      j++;
-      for(i=1; i<=decimal; i++){
-        if(mantissa[i] == '\0'){
-          s[j] = '0';
-        }
-        else{
-          s[j] = mantissa[i];
-        }
-        j++;
-      }
-      s[j] = 'e';
-      j++;
-      i=0;
-      while(exponent[i]){
-        s[j] = exponent[i];
-        i++;
-        j++;
-      }
-      s[j] = '\0';
-      return j;
-    }
+    if(m == 0)
+      n = 0;
+    decimalConversion(&F, &n, E, m);
+    return fp_fmt_g(str, prec, s, n, F);
   }
-  else if(class == NAN){
-    s[0] = 'n';
-    s[1] = 'a';
-    s[2] = 'n';
-    s[3] = '\0';
-    return 3;
-  }
-  else if(class == POS_INF){
-    s[0] = 'i';
-    s[1] = 'n';
-    s[2] = 'f';
-    s[3] = '\0';
-    return 3;
+  //otherwise: +inf, -inf or nan
+  return fp_special_case(class, str);
+}
+
+
+int fp_special_case(fpclass_t class, char *str){
+  int i = 0;
+  if(class == POS_INF){
+    str[i++] = 'i';
+    str[i++] = 'n';
+    str[i++] = 'f';
+    str[i] = '\0';
   }
   else if(class == NEG_INF){
-    s[0] = '-';
-    s[1] = 'i';
-    s[2] = 'n';
-    s[3] = 'f';
-    s[4] = '\0';
-    return 4;
+    str[i++] = '-';
+    str[i++] = 'i';
+    str[i++] = 'n';
+    str[i++] = 'f';
+    str[i] = '\0';
   }
-  return 0;
+  else{
+    str[i++] = 'n';
+    str[i++] = 'a';
+    str[i++] = 'n';
+    str[i] = '\0';
+  }
+  return i;
+}
+
+int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
+  if(prec > 18)
+    prec = 18;
+
+  //write sign
+  int i = 0;
+  if(s)
+    str[i++] = '-';
+
+  if(n == 0){
+    //f == 0.
+    str[i++] = '0';
+    if(prec){
+      str[i++] = '.';
+      for(int j = 0; j < prec; j++){
+        str[i++] = '0';
+      }
+    }
+    str[i++] = 'e';
+    str[i++] = '+';
+    str[i++] = '0';
+    str[i++] = '0';
+    str[i] = '\0';
+    return i;
+  }
+
+  int l = 20;
+  char d[l]; //to write decimal mantissa
+  char e[l]; //to write decimal exponent
+  //n has 19 digits
+  string_u(n,d);
+  //we want 1 before the decimal point, 18 after
+  //so we increase the decimal exponent by 18
+  F += 18;
+  if(F > -10 && F < 10){
+    //we want e to be written with at least 2 digits
+    //example: e-05, e+02, e+00
+    int k = 0;
+    if(F < 0){
+      e[k++] = '-';
+      F = -F;
+    }
+    e[k++] = '0';
+    e[k++] = '0'+F;
+    e[k] = '\0';
+  }
+  else{
+    string_d(F,e);
+  }
+
+  //write decimal mantissa
+  str[i++] = d[0];
+  if(prec){
+    str[i++] = '.';
+    for(int j = 1; j <= prec; j++){
+      str[i++] = d[j];
+    }
+  }
+
+  //write decimal exponent
+  str[i++] = 'e';
+  int j = 0;
+  if(e[j] == '-')
+    str[i++] = e[j++];
+  else
+    str[i++] = '+';
+  while(e[j]){
+    str[i++] = e[j++];
+  }
+  str[i] = '\0';
+  return i;
+}
+
+int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
+  if(prec > 18)
+    prec = 18;
+
+  //write sign
+  int i = 0;
+  if(s)
+    str[i++] = '-';
+
+  if(n == 0){
+    //f == 0.
+    str[i++] = '0';
+    if(prec){
+      str[i++] = '.';
+      for(int j = 0; j < prec; j++){
+        str[i++] = '0';
+      }
+    }
+    str[i] = '\0';
+    return i;
+  }
+
+  int l = 20;
+  char d[l]; //to write decimal mantissa
+  char e[l]; //to write decimal exponent
+  //n has 19 digits
+  string_d(F,e);
+  string_u(n,d);
+
+  //write decimal mantissa
+  int digits = 19+F; //digits before decimal point
+  int j = 0; //used to index decimal mantissa
+  if(digits >= 19){
+    //write whole mantissa
+    //then add zeros until decimal point
+    //add prec zeros after decimal point
+    for(j = 0; j < 19; j++){
+      str[i++] = d[j];
+    }
+    while(j < digits){
+      str[i++] = '0';
+      j++;
+    }
+    if(prec){
+      str[i++] = '.';
+      for(int k = 0; k < prec; k++){
+        str[i++] = '0';
+      }
+    }
+  }
+  else if(digits > 0){
+    //write part of the decimal mantissa before decimal point
+    //then maybe write the rest afterwards, depending on prec
+    //complete with zeros if not enough digits for prec
+    for(j = 0; j < digits; j++){
+      str[i++] = d[j];
+    }
+    if(prec){
+      str[i++] = '.';
+      int decimals = 19-j; //unconsumed digits on decimal mantissa
+      //that we haven't consumed yet
+      for(int k = 0; k < prec; k++){
+        if(k < decimals)
+          str[i++] = d[j++];
+        else
+          str[i++] = '0';
+      }
+    }
+  }
+  else{
+    //0.0...0dddd
+    //the decimal mantissa starts
+    //after the decimal point
+    str[i++] = '0';
+    if(prec){
+      str[i++] = '.';
+      digits = -digits;
+      for(int k = 0, j = 0; k < prec; k++){
+        if(k < digits)
+          str[i++] = '0';
+        else
+          str[i++] = d[j++];
+      }
+    }
+  }
+  str[i] = '\0';
+  return i;
+}
+
+int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
+  if(prec > 18)
+    prec = 18;
+  if(prec == 0)
+    prec = 1;
+
+  //write sign
+  int i = 0;
+  if(s)
+    str[i++] = '-';
+
+  if(n == 0){
+    //f == 0.
+    str[i++] = '0';
+    str[i] = '\0';
+    return i;
+  }
+  int l = 20;
+  char d[l]; //to write decimal mantissa
+  char e[l]; //to write decimal exponent
+  //n has 19 digits
+  string_u(n,d);
+
+  //if written in 'e'-format, the exponent would be F+18
+  if(F+18 >= (int)prec || F+18 < -4){
+    //printf("%d\n", F);
+    //'e'-format conversion
+    F += 18;
+    string_d(F,e);
+    str[i++] = d[0];
+    if(prec > 1){
+      str[i++] = '.';
+      for(int j = 1; j < prec; j++){
+        str[i++] = d[j];
+      }
+      int k = 0;
+      str[i++] = 'e';
+      if(e[k] == '-')
+        str[i++] = e[k++];
+      else
+        str[i++] = '+';
+      if(e[k] == '0'){
+        //exponent is zero, has to be written as 00
+        str[i++] = '0';
+        str[i++] = '0';
+      }
+      else{
+        if(F > -10 && F < 10)
+          str[i++] = '0';
+        while(e[k]){
+          str[i++] = e[k++];
+        }
+      }
+    }
+    str[i] = '\0';
+    return i;
+  }
+
+  int digits = 19+F; //digits before the decimal point
+  int j = 0; //where we are on our decimal mantissa
+  if(digits <= 0){
+    //0.0... ddd
+    str[i++] = '0';
+  }
+  else{
+    for(int k = 0; k < digits; k++){
+      str[i++] = d[j++];
+    }
+  }
+  if(j < prec){
+    str[i++] = '.';
+    while(digits < 0){
+      str[i++] = '0';
+      digits++;
+    }
+    while(j < prec){
+      str[i++] = d[j++];
+    }
+    //remove trailing zeros
+    while(str[i-1] == '0'){
+      i--;
+    }
+    if(str[i-1] == '.')
+      i--;
+  }
+  str[i] = '\0';
+  return i;
 }
