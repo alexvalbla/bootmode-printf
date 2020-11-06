@@ -18,7 +18,7 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
 
   char tmp[384]; //argument conversions
   char mods[2]; //length modifiers
-  uint16_t prec; //for floating point formats
+  uint16_t prec; //precision modifier
   uint8_t flags; //1 bit for each flag
 
   ssize_t length; //length of conversions
