@@ -23,7 +23,11 @@ Variables or constants of type <float> are implicitly converted to <double> in <
 This the aforementioned printf functions can print both <double> and <long double> arguments (via the 'L' modifier).
 Note that <double> is taken to be a IEEE-754 64-bit floating point number, and <long double> is taken to be a IEEE-754 80-bit extended precision floating point number.
 FLoating point conversions are precise up to the 17th digit after the decimal point if you were to write them in scientific notation.
+Percision for floating point conversions id capped at 18 or 19 depending on the format so as not to show more than 19 significant digits, as the conversion algorithm used cannot give us more than that.
 The conversion algorithm is explained given in the file <algorithm.pdf>.
+
+# Compilation
+The algorithm used to convert floating point number uses 128-bit unsigned integers provided by GCC's __uint128_t
 
 # Ongoing work
 Implemented formats  d, u, x, o, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, L  and the  #  flag.
@@ -31,6 +35,7 @@ Working on formats  a, A, s, p  modifiers j, z, t and flags  0, +, -, and ' ' (w
 The padding flags  0', '+', '-', and ' '  can be specified in the format string, they just don't do anything yet.
 Same for the field width modifier, it can be specified in the format string, but doesn't do anything yet.
 The precision modifier is implemented for floating point conversions, but not yet for all integer conversions.
+Right now, besides floating point conversions, precision is capped at 40
 Also still cleaning up the code.
 Of course, there are probably still some bugs...
 
