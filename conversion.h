@@ -19,11 +19,11 @@ typedef union{
 
 typedef enum {NUMBER, NAN, POS_INF, NEG_INF} fpclass_t;
 
-fpclass_t decomposeDouble(int *s, int32_t *E, uint64_t *m, double x);
+fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x);
 
-fpclass_t decomposeLongDouble(int *s, int32_t *E, uint64_t *m, long double x);
+fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x);
 
-void decimalConversion(int32_t *F, __uint128_t *n, int32_t E, uint64_t m);
+void decimalConversion(int32_t *F, uint64_t *n, int32_t E, uint64_t m);
 
 
 #endif

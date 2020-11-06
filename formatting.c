@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "conversion.h"
 #include "formatting.h"
 
@@ -27,31 +28,13 @@ void PUTS(char *s){
   }
 }
 
-void string_s(char *s, char *str, unsigned int strIndex, P_mode Padding_F, unsigned int length, unsigned int padding_length){
-  int i;
-  if(Padding_F != RIGHT_PADDED){
-    for(i = 0; i < padding_length; i++){
-      str[i+strIndex] = ' ';
-    }
-    strIndex += i;
-  }
-  for(i = 0; i < length; i++){
-    str[i+strIndex] = s[i];
-  }
-  strIndex += length;
-  if(Padding_F == RIGHT_PADDED){
-    for(i = 0; i < padding_length; i++){
-      str[i+strIndex] = ' ';
-    }
-  }
-}
 
 //integer type to string conversion functions
 
-int string_d(int64_t a, char *s){
+int convert_d(int64_t a, char *str, uint8_t flags){
   if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
+    str[0] = '0';
+    str[1] = '\0';
     return 1;
   }
   uint64_t b;
@@ -65,208 +48,204 @@ int string_d(int64_t a, char *s){
   }
   int i = 0;
   while(b != 0){
-    s[i++] = '0'+b%10;
+    str[i++] = '0'+b%10;
     b /= 10;
   }
   if(neg)
-    s[i++] = '-';
-  s[i] = '\0';
-  str_rev(s, i);
+    str[i++] = '-';
+  str[i] = '\0';
+  str_rev(str, i);
   return i;
 }
 
 
 //octal unsigned
 
-int string_u(uint64_t a, char *s){
-  if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
+int convert_u(uint64_t a, char *str, uint8_t flags){
+  if(a==0){
+    str[0] = '0';
+    str[1] = '\0';
     return 1;
   }
   int i = 0;
   while(a != 0){
-    s[i++] = '0'+a%10;
+    str[i++] = '0'+a%10;
     a /= 10;
   }
-  s[i] = '\0';
-  str_rev(s, i);
+  str[i] = '\0';
+  str_rev(str, i);
   return i;
 }
 
 
 //hexadecimal unsigned
 
-int string_x(uint64_t a, char *s, int mod){
+int convert_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
+  //if no precision specified, precision is 1
+  if(!(flags&FLAG_PREC))
+    prec = 1;
+
   if(a == 0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
+    int i = 0;
+    while(i < prec){
+      str[i++] = '0';
+    }
+    str[i] = '\0';
+    return i;
   }
-  int tmp = 'a';
-  if(mod == 1)
-    tmp = 'A';
+
+  char tmp_c = 'a';
+  char tmp_x = 'x';
+  if(flags&FLAG_UCAS){
+    tmp_c = 'A';
+    tmp_x = 'X';
+  }
   int i = 0;
   int h;
   while(a != 0){
     h = a&15u;
     a >>= 4;
     if(h < 10)
-      s[i++] = '0'+h;
+      str[i++] = '0'+h;
     else
-      s[i++] = tmp+h;
+      str[i++] = tmp_c+h;
   }
-  if(mod == 1)
-    s[i++] = 'X';
-  else
-    s[i++] = 'x';
-  s[i++] = '0';
-  s[i] = '\0';
-  str_rev(s, i);
+  while(i < prec){
+    str[i++] = '0';
+  }
+  if(flags&FLAG_ALTF){
+    str[i++] = tmp_x;
+    str[i++] = '0';
+  }
+  str[i] = '\0';
+  str_rev(str, i);
   return i;
 }
-
 
 
 // octal unsigned
 
-int string_o(uint64_t a, char *s){
-  if(a==0){
-    s[0] = '0';
-    s[1] = '\0';
-    return 1;
+int convert_o(uint64_t a, char *str, uint16_t prec, uint8_t flags){
+  if(!(flags&FLAG_PREC))
+    prec = 1;
+
+  if(a == 0){
+    int i = 0;
+    while(i < prec){
+      str[i++] = '0';
+    }
+    if(flags&FLAG_ALTF && i == 0)
+      str[i++] = '0';
+    str[i] = '\0';
+    return i;
   }
+
   int o;
   int i = 0;
   while (a != 0){
     o = a&7u;
-    s[i++] = '0'+o;
+    str[i++] = '0'+o;
     a >>= 3;
   }
-  s[i++] = '0';
-  s[i] = '\0';
-  str_rev(s, i);
+  if(flags&FLAG_ALTF)
+    str[i++] = '0';
+  str[i] = '\0';
+  str_rev(str, i);
   return i;
 }
 
+
+void convert_n(va_list ap, char mods[2], ssize_t total){
+  if(mods[0] == '\0'){
+    int *n = va_arg(ap, int*);
+    *n = total;
+  }
+  else if(mods[0] == 'l' && mods[1] == '\0'){
+    long *n = va_arg(ap, long*);
+    *n = total;
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    long long *n = va_arg(ap, long long*);
+    *n = total;
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    short *n = (short*)va_arg(ap, int*);
+    *n = total;
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    char *n = (char*)va_arg(ap, int*);
+    *n = total;
+  }
+}
+
+
 //floating point conversion functions
 
-//exponent format
-//6 decimals by default, 18 max
-
-int string_e(double f, char *str, unsigned int prec){
-  int s; //sign
+int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+  char s; //sign
   int32_t E; //binary exponent
   uint64_t m; //binary mantissa
   int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
+  uint64_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeDouble(&s, &E, &m, f);
+  if(mods[0] == 'L')
+    class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+  else
+    class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+
   if(class == NUMBER){
     if(m == 0)
       n = 0;
     decimalConversion(&F, &n, E, m);
-    return fp_fmt_e(str, prec, s, n, F);
+    return fp_fmt_e(str, s, n, F, prec, flags);
   }
   //otherwise: +inf, -inf or nan
   return fp_special_case(class, str);
 }
 
-int string_Le(long double f, char *str, unsigned int prec){
-  int s; //sign
+int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+  char s; //sign
   int32_t E; //binary exponent
   uint64_t m; //binary mantissa
   int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
+  uint64_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeLongDouble(&s, &E, &m, f);
+  if(mods[0] == 'L')
+    class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+  else
+    class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+
   if(class == NUMBER){
     if(m == 0)
       n = 0;
     decimalConversion(&F, &n, E, m);
-    return fp_fmt_e(str, prec, s, n, F);
+    return fp_fmt_f(str, s, n, F, prec, flags);
   }
   //otherwise: +inf, -inf or nan
   return fp_special_case(class, str);
 }
 
-//floating point format
-//do not use for values greater than +/-10^(-19)
-
-int string_f(double f, char *str, unsigned int prec){
-  int s; //sign
+int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+  char s; //sign
   int32_t E; //binary exponent
   uint64_t m; //binary mantissa
   int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
+  uint64_t n; //decimal mantissa
   fpclass_t class;
-  class = decomposeDouble(&s, &E, &m, f);
+  if(mods[0] == 'L')
+    class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+  else
+    class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+
   if(class == NUMBER){
     if(m == 0)
       n = 0;
     decimalConversion(&F, &n, E, m);
-    return fp_fmt_f(str, prec, s, n, F);
+    return fp_fmt_g(str, s, n, F, prec, flags);
   }
   //otherwise: +inf, -inf or nan
   return fp_special_case(class, str);
 }
-
-int string_Lf(long double f, char *str, unsigned int prec){
-  int s; //sign
-  int32_t E; //binary exponent
-  uint64_t m; //binary mantissa
-  int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
-  fpclass_t class;
-  class = decomposeLongDouble(&s, &E, &m, f);
-  if(class == NUMBER){
-    if(m == 0)
-      n = 0;
-    decimalConversion(&F, &n, E, m);
-    return fp_fmt_f(str, prec, s, n, F);
-  }
-  //otherwise: +inf, -inf or nan
-  return fp_special_case(class, str);
-}
-
-//general format
-
-int string_g(double f, char *str, unsigned int prec){
-  int s; //sign
-  int32_t E; //binary exponent
-  uint64_t m; //binary mantissa
-  int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
-  fpclass_t class;
-  class = decomposeDouble(&s, &E, &m, f);
-  if(class == NUMBER){
-    if(m == 0)
-      n = 0;
-    decimalConversion(&F, &n, E, m);
-    return fp_fmt_g(str, prec, s, n, F);
-  }
-  //otherwise: +inf, -inf or nan
-  return fp_special_case(class, str);
-}
-
-int string_Lg(long double f, char *str, unsigned int prec){
-  int s; //sign
-  int32_t E; //binary exponent
-  uint64_t m; //binary mantissa
-  int32_t F; //decimal exponent
-  __uint128_t n; //decimal mantissa
-  fpclass_t class;
-  class = decomposeLongDouble(&s, &E, &m, f);
-  if(class == NUMBER){
-    if(m == 0)
-      n = 0;
-    decimalConversion(&F, &n, E, m);
-    return fp_fmt_g(str, prec, s, n, F);
-  }
-  //otherwise: +inf, -inf or nan
-  return fp_special_case(class, str);
-}
-
 
 int fp_special_case(fpclass_t class, char *str){
   int i = 0;
@@ -292,9 +271,16 @@ int fp_special_case(fpclass_t class, char *str){
   return i;
 }
 
-int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
-  if(prec > 18)
-    prec = 18;
+int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags){
+  //adjust precision
+  if(flags&FLAG_PREC){
+    if(prec > 18)
+      prec = 18;
+  }
+  else{
+    //precision missing, taken as 6
+    prec = 6;
+  }
 
   //write sign
   int i = 0;
@@ -304,7 +290,7 @@ int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   if(n == 0){
     //f == 0.
     str[i++] = '0';
-    if(prec){
+    if(prec || (flags&FLAG_ALTF)){
       str[i++] = '.';
       for(int j = 0; j < prec; j++){
         str[i++] = '0';
@@ -322,7 +308,7 @@ int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  string_u(n,d);
+  convert_u(n,d,0);
   //we want 1 before the decimal point, 18 after
   //so we increase the decimal exponent by 18
   F += 18;
@@ -339,12 +325,12 @@ int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
     e[k] = '\0';
   }
   else{
-    string_d(F,e);
+    convert_d(F,e,0);
   }
 
   //write decimal mantissa
   str[i++] = d[0];
-  if(prec){
+  if(prec || (flags&FLAG_ALTF)){
     str[i++] = '.';
     for(int j = 1; j <= prec; j++){
       str[i++] = d[j];
@@ -365,7 +351,16 @@ int fp_fmt_e(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   return i;
 }
 
-int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
+int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags){
+  //adjust precision
+  if(flags&FLAG_PREC){
+    if(prec > 19)
+      prec = 19;
+  }
+  else{
+    //precision missing, taken as 6
+    prec = 6;
+  }
   if(prec > 18)
     prec = 18;
 
@@ -391,14 +386,14 @@ int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  string_d(F,e);
-  string_u(n,d);
+  convert_d(F,e,0);
+  convert_u(n,d,0);
 
   //write decimal mantissa
   int digits = 19+F; //digits before decimal point
   int j = 0; //used to index decimal mantissa
   if(digits >= 19){
-    //write whole mantissa
+    //write the whole mantissa
     //then add zeros until decimal point
     //add prec zeros after decimal point
     for(j = 0; j < 19; j++){
@@ -408,7 +403,7 @@ int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
       str[i++] = '0';
       j++;
     }
-    if(prec){
+    if(prec || (flags&FLAG_ALTF)){
       str[i++] = '.';
       for(int k = 0; k < prec; k++){
         str[i++] = '0';
@@ -422,10 +417,10 @@ int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
     for(j = 0; j < digits; j++){
       str[i++] = d[j];
     }
-    if(prec){
+    if(prec || (flags&FLAG_ALTF)){
       str[i++] = '.';
-      int decimals = 19-j; //unconsumed digits on decimal mantissa
-      //that we haven't consumed yet
+      int decimals = 19-j; //digits on decimal mantissa...
+      //...that we haven't consumed yet
       for(int k = 0; k < prec; k++){
         if(k < decimals)
           str[i++] = d[j++];
@@ -439,7 +434,7 @@ int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
     //the decimal mantissa starts
     //after the decimal point
     str[i++] = '0';
-    if(prec){
+    if(prec || (flags&FLAG_ALTF)){
       str[i++] = '.';
       digits = -digits;
       for(int k = 0, j = 0; k < prec; k++){
@@ -454,11 +449,18 @@ int fp_fmt_f(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   return i;
 }
 
-int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
-  if(prec > 18)
-    prec = 18;
-  if(prec == 0)
-    prec = 1;
+int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags){
+  //adjust precision
+  if(flags&FLAG_PREC){
+    if(prec > 19)
+      prec = 19;
+    else if(prec == 0)
+      prec = 1;
+  }
+  else{
+    //precision missing, taken as 6
+    prec = 6;
+  }
 
   //write sign
   int i = 0;
@@ -468,6 +470,12 @@ int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   if(n == 0){
     //f == 0.
     str[i++] = '0';
+    if(flags&FLAG_ALTF){
+      str[i++] = '.';
+      for(int k = 1; k < prec; k++){
+        str[i++] = '0';
+      }
+    }
     str[i] = '\0';
     return i;
   }
@@ -475,43 +483,43 @@ int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  string_u(n,d);
+  convert_u(n,d,0);
 
   //if written in 'e'-format, the exponent would be F+18
   if(F+18 >= (int)prec || F+18 < -4){
-    //printf("%d\n", F);
     //'e'-format conversion
     F += 18;
-    string_d(F,e);
+    convert_d(F,e,0);
     str[i++] = d[0];
-    if(prec > 1){
+    if(prec > 1 || (flags&FLAG_ALTF)){
       str[i++] = '.';
       for(int j = 1; j < prec; j++){
         str[i++] = d[j];
       }
-      int k = 0;
-      str[i++] = 'e';
-      if(e[k] == '-')
+    }
+    int k = 0;
+    str[i++] = 'e';
+    if(e[k] == '-')
+      str[i++] = e[k++];
+    else
+      str[i++] = '+';
+    if(e[k] == '0'){
+      //exponent is zero, has to be written as 00
+      str[i++] = '0';
+      str[i++] = '0';
+    }
+    else{
+      if(F > -10 && F < 10)
+        str[i++] = '0';
+      while(e[k]){
         str[i++] = e[k++];
-      else
-        str[i++] = '+';
-      if(e[k] == '0'){
-        //exponent is zero, has to be written as 00
-        str[i++] = '0';
-        str[i++] = '0';
-      }
-      else{
-        if(F > -10 && F < 10)
-          str[i++] = '0';
-        while(e[k]){
-          str[i++] = e[k++];
-        }
       }
     }
     str[i] = '\0';
     return i;
   }
 
+  //'f'-format conversion
   int digits = 19+F; //digits before the decimal point
   int j = 0; //where we are on our decimal mantissa
   if(digits <= 0){
@@ -523,7 +531,7 @@ int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
       str[i++] = d[j++];
     }
   }
-  if(j < prec){
+  if(j < prec || (flags&FLAG_ALTF)){
     str[i++] = '.';
     while(digits < 0){
       str[i++] = '0';
@@ -533,11 +541,13 @@ int fp_fmt_g(char *str, unsigned int prec, int s, __uint128_t n, int32_t F){
       str[i++] = d[j++];
     }
     //remove trailing zeros
-    while(str[i-1] == '0'){
-      i--;
+    if(!(flags&FLAG_ALTF)){
+      while(str[i-1] == '0'){
+        i--;
+      }
+      if(str[i-1] == '.')
+        i--;
     }
-    if(str[i-1] == '.')
-      i--;
   }
   str[i] = '\0';
   return i;
