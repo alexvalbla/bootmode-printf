@@ -6,7 +6,7 @@ The file <algorithm.pdf> explains the mathematics behind the conversion algorith
 
 # Functions and system calls
 The only system calls used are putchar() and alloca(). The code supposes that you can define these two functions as someting other than a system call in your target environment. The code also requires that you have access to the <va_list> type, as well as the va_start(), va_end(), va_arg() macros.
-The current functions are implemented:
+The following functions are implemented:
 - vsnprintf()
 - vsprintf()
 - vprintf()
@@ -26,13 +26,13 @@ FLoating point conversions are precise up to the 17th digit after the decimal po
 The conversion algorithm is explained given in the file <algorithm.pdf>.
 
 # Ongoing work
-Implemented formats  d, u, x, o, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, L  and the  #  flag
-Working on formats  a, A, s, p  modifiers j, z, t and flags  0, +, -, and ' ' (whitespace)
+Implemented formats  d, u, x, o, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, L  and the  #  flag.
+Working on formats  a, A, s, p  modifiers j, z, t and flags  0, +, -, and ' ' (whitespace).
 The padding flags  0', '+', '-', and ' '  can be specified in the format string, they just don't do anything yet.
 Same for the field width modifier, it can be specified in the format string, but doesn't do anything yet.
 The precision modifier is implemented for floating point conversions, but not yet for all integer conversions.
 Also still cleaning up the code.
-There are probably still some bugs...
+Of course, there are probably still some bugs...
 
 
 All rights reserved.
