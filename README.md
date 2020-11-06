@@ -27,7 +27,7 @@ Percision for floating point conversions id capped at 18 or 19 depending on the 
 The conversion algorithm is explained given in the file <algorithm.pdf>.
 
 # Compilation
-The algorithm used to convert floating point number uses 128-bit unsigned integers provided by GCC's __uint128_t
+The algorithm used to convert floating point number uses 128-bit unsigned integers provided by GCC's __uint128_t type.
 
 # Ongoing work
 Implemented formats  d, u, x, o, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, L  and the  #  flag.
