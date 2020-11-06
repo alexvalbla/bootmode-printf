@@ -9,10 +9,10 @@
 
 //string manipulation functions
 
-void str_rev(char *s, size_t sz){
-  if(sz <= 1)
+void str_rev(char *s, size_t size){
+  if(size <= 1)
     return;
-  char *p = &s[sz-1];
+  char *p = &s[size-1];
   while(s < p){
     *s ^= *p;
     *p ^= *s;
@@ -24,14 +24,120 @@ void str_rev(char *s, size_t sz){
 
 void PUTS(char *s){
   while(*s){
-    putchar(*s++);
+    putchar(*(s++));
   }
 }
 
 
 //integer type to string conversion functions
 
-int convert_d(int64_t a, char *str, uint8_t flags){
+int convert_d(va_list ap, char mods[2], char *str, uint8_t flags){
+  int64_t a;
+  if(mods[0] == 'l' && mods[1] == '\0'){
+    a = va_arg(ap, long);
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    a = va_arg(ap, long long);
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    a = va_arg(ap, int);
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    a = va_arg(ap, int);
+  }
+  else{
+    a = va_arg(ap, int);
+  }
+  return int_fmt_d(a, str, flags);
+}
+
+int convert_u(va_list ap, char mods[2], char *str, uint8_t flags){
+  uint64_t a;
+  if(mods[0] == 'l' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned long);
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    a = va_arg(ap, unsigned long long);
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned int);
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    a = va_arg(ap, unsigned int);
+  }
+  else{
+    a = va_arg(ap, unsigned int);
+  }
+  return int_fmt_u(a, str, flags);
+}
+
+int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+  uint64_t a;
+  if(mods[0] == 'l' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned long);
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    a = va_arg(ap, unsigned long long);
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned int);
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    a = va_arg(ap, unsigned int);
+  }
+  else{
+    a = va_arg(ap, unsigned int);
+  }
+  return int_fmt_x(a, str, prec, flags);
+}
+
+int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+  uint64_t a;
+  if(mods[0] == 'l' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned long);
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    a = va_arg(ap, unsigned long long);
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    a = va_arg(ap, unsigned int);
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    a = va_arg(ap, unsigned int);
+  }
+  else{
+    a = va_arg(ap, unsigned int);
+  }
+  return int_fmt_o(a, str, prec, flags);
+}
+
+void convert_n(va_list ap, char mods[2], ssize_t total){
+  if(mods[0] == '\0'){
+    int *n = va_arg(ap, int*);
+    *n = total;
+  }
+  else if(mods[0] == 'l' && mods[1] == '\0'){
+    long *n = va_arg(ap, long*);
+    *n = total;
+  }
+  else if(mods[0] == 'l' && mods[1] == 'l'){
+    long long *n = va_arg(ap, long long*);
+    *n = total;
+  }
+  else if(mods[0] == 'h' && mods[1] == '\0'){
+    short *n = (short*)va_arg(ap, int*);
+    *n = total;
+  }
+  else if(mods[0] == 'h' && mods[1] == 'h'){
+    char *n = (char*)va_arg(ap, int*);
+    *n = total;
+  }
+}
+
+
+
+
+int int_fmt_d(int64_t a, char *str, uint8_t flags){
   if(a == 0){
     str[0] = '0';
     str[1] = '\0';
@@ -58,11 +164,8 @@ int convert_d(int64_t a, char *str, uint8_t flags){
   return i;
 }
 
-
-//octal unsigned
-
-int convert_u(uint64_t a, char *str, uint8_t flags){
-  if(a==0){
+int int_fmt_u(uint64_t a, char *str, uint8_t flags){
+  if(a == 0){
     str[0] = '0';
     str[1] = '\0';
     return 1;
@@ -77,10 +180,7 @@ int convert_u(uint64_t a, char *str, uint8_t flags){
   return i;
 }
 
-
-//hexadecimal unsigned
-
-int convert_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
+int int_fmt_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
   //if no precision specified, precision is 1
   if(!(flags&FLAG_PREC))
     prec = 1;
@@ -93,7 +193,6 @@ int convert_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
     str[i] = '\0';
     return i;
   }
-
   char tmp_c = 'a';
   char tmp_x = 'x';
   if(flags&FLAG_UCAS){
@@ -122,10 +221,8 @@ int convert_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
   return i;
 }
 
-
-// octal unsigned
-
-int convert_o(uint64_t a, char *str, uint16_t prec, uint8_t flags){
+int int_fmt_o(uint64_t a, char *str, uint16_t prec, uint8_t flags){
+  //if no precision specified, precision is 1
   if(!(flags&FLAG_PREC))
     prec = 1;
 
@@ -139,7 +236,6 @@ int convert_o(uint64_t a, char *str, uint16_t prec, uint8_t flags){
     str[i] = '\0';
     return i;
   }
-
   int o;
   int i = 0;
   while (a != 0){
@@ -155,30 +251,6 @@ int convert_o(uint64_t a, char *str, uint16_t prec, uint8_t flags){
 }
 
 
-void convert_n(va_list ap, char mods[2], ssize_t total){
-  if(mods[0] == '\0'){
-    int *n = va_arg(ap, int*);
-    *n = total;
-  }
-  else if(mods[0] == 'l' && mods[1] == '\0'){
-    long *n = va_arg(ap, long*);
-    *n = total;
-  }
-  else if(mods[0] == 'l' && mods[1] == 'l'){
-    long long *n = va_arg(ap, long long*);
-    *n = total;
-  }
-  else if(mods[0] == 'h' && mods[1] == '\0'){
-    short *n = (short*)va_arg(ap, int*);
-    *n = total;
-  }
-  else if(mods[0] == 'h' && mods[1] == 'h'){
-    char *n = (char*)va_arg(ap, int*);
-    *n = total;
-  }
-}
-
-
 //floating point conversion functions
 
 int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
@@ -188,7 +260,7 @@ int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   int32_t F; //decimal exponent
   uint64_t n; //decimal mantissa
   fpclass_t class;
-  if(mods[0] == 'L')
+  if(mods[0] == 'L' && mods[1] == '\0')
     class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
   else
     class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
@@ -210,7 +282,7 @@ int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   int32_t F; //decimal exponent
   uint64_t n; //decimal mantissa
   fpclass_t class;
-  if(mods[0] == 'L')
+  if(mods[0] == 'L' && mods[1] == '\0')
     class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
   else
     class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
@@ -232,7 +304,7 @@ int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   int32_t F; //decimal exponent
   uint64_t n; //decimal mantissa
   fpclass_t class;
-  if(mods[0] == 'L')
+  if(mods[0] == 'L' && mods[1] == '\0')
     class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
   else
     class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
@@ -308,7 +380,7 @@ int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  convert_u(n,d,0);
+  int_fmt_u(n,d,0);
   //we want 1 before the decimal point, 18 after
   //so we increase the decimal exponent by 18
   F += 18;
@@ -325,7 +397,7 @@ int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
     e[k] = '\0';
   }
   else{
-    convert_d(F,e,0);
+    int_fmt_d(F,e,0);
   }
 
   //write decimal mantissa
@@ -384,10 +456,8 @@ int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
 
   int l = 20;
   char d[l]; //to write decimal mantissa
-  char e[l]; //to write decimal exponent
   //n has 19 digits
-  convert_d(F,e,0);
-  convert_u(n,d,0);
+  int_fmt_u(n,d,0);
 
   //write decimal mantissa
   int digits = 19+F; //digits before decimal point
@@ -483,13 +553,13 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  convert_u(n,d,0);
+  int_fmt_u(n,d,0);
 
   //if written in 'e'-format, the exponent would be F+18
   if(F+18 >= (int)prec || F+18 < -4){
     //'e'-format conversion
     F += 18;
-    convert_d(F,e,0);
+    int_fmt_d(F,e,0);
     str[i++] = d[0];
     if(prec > 1 || (flags&FLAG_ALTF)){
       str[i++] = '.';

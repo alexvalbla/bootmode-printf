@@ -13,20 +13,30 @@
 #define FLAG_WDTH 0200 //field width
 
 
-void str_rev(char *s, size_t sz);
+void str_rev(char *s, size_t size);
 
 void PUTS(char *s);
 
 
-int convert_d(int64_t a, char *str, uint8_t flags);
+int convert_d(va_list ap, char mods[2], char *str, uint8_t flags);
 
-int convert_u(uint64_t a, char *str, uint8_t flags);
+int convert_u(va_list ap, char mods[2], char *str, uint8_t flags);
 
-int convert_x(uint64_t a, char *str, uint16_t prec, uint8_t flags);
+int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
-int convert_o(uint64_t a, char *str, uint16_t prec, uint8_t flags);
+int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
 void convert_n(va_list ap, char mods[2], ssize_t total);
+
+
+int int_fmt_d(int64_t a, char *str, uint8_t flags);
+
+int int_fmt_u(uint64_t a, char *str, uint8_t flags);
+
+int int_fmt_x(uint64_t a, char *str, uint16_t prec, uint8_t flags);
+
+int int_fmt_o(uint64_t a, char *str, uint16_t prec, uint8_t flags);
+
 
 
 int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);

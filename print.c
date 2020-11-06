@@ -9,25 +9,7 @@
 #define DFLT_SIZE 1024 //adjustable
 
 
-int bad_length_mod(char mods[2], unsigned int k){
-  if(k > 2)
-    return 1;
-  if(mods[0] == '\0')
-    return 0;
-  if(mods[0] == 'h' && mods[1] == '\0')
-    return 0;
-  if(mods[0] == 'l' && mods[1] == '\0')
-    return 0;
-  if(mods[0] == 'l' && mods[1] == '\0')
-    return 0;
-  if(mods[0] == 'L' && mods[1] == '\0')
-    return 0;
-  if(mods[0] == 'h' && mods[1] == 'h')
-    return 0;
-  if(mods[0] == 'h' && mods[1] == 'h')
-    return 0;
-  return 1;
-}
+
 
 int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
   unsigned int str_idx = 0; //where we are on the output string str
@@ -116,8 +98,8 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
         i++;
         while(fmt[i] >= '0' && fmt[i] <= '9'){
           prec = prec*10 + (fmt[i++] - '0');
-          //if(prec > 40)
-          //  prec = 40
+          if(prec > 40)
+            prec = 40;
         }
       }
 
@@ -131,29 +113,31 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
           mods[k] = fmt[i];
         i++;
       }
-      if(bad_length_mod(mods,k))
+      if(k > 2){
+        //there can never be more
+        //than 2 length modifiers
         goto BAD_FORMAT;
-
-
+      }
 
       char c;
       switch(fmt[i]){
+        case 'i':
         case 'd':
-          length = convert_d(va_arg(ap, int), tmp, flags);
+          length = convert_d(ap, mods, tmp, flags);
           break;
 
         case 'u':
-          length = convert_u(va_arg(ap, unsigned int), tmp, flags);
+          length = convert_u(ap, mods, tmp, flags);
           break;
 
         case 'X':
           flags |= FLAG_UCAS;
         case 'x':
-          length = convert_x(va_arg(ap, unsigned int), tmp, prec, flags);
+          length = convert_x(ap, mods, tmp, prec, flags);
           break;
 
         case 'o':
-          length = convert_o(va_arg(ap, unsigned int), tmp, prec, flags);
+          length = convert_o(ap, mods, tmp, prec, flags);
           break;
 
         case 'n':
@@ -364,8 +348,8 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
           //room for (at least) one more character
           //before terminating null byte
           str[str_idx++] = fmt[i];
-          total++;
         }
+        total++;
         i++;
       }
       else{
