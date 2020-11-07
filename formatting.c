@@ -566,6 +566,15 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
       for(int j = 1; j < prec; j++){
         str[i++] = d[j];
       }
+      if(!(flags&FLAG_ALTF)){
+        //remove trailing zeros
+        //and decimal point if no decimals follow it
+        while(str[i-1] == '0'){
+          i--;
+        }
+        if(str[i-1] == '.')
+          i--;
+      }
     }
     int k = 0;
     str[i++] = 'e';
@@ -612,6 +621,8 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
     }
     //remove trailing zeros
     if(!(flags&FLAG_ALTF)){
+      //remove trailing zeros
+      //and decimal point if no decimals follow it
       while(str[i-1] == '0'){
         i--;
       }
