@@ -29,7 +29,7 @@ The conversion algorithm is explained given in the file <algorithm.pdf>.
 WARNING: values of "long doubles" can range up to roughly 10^4932. With the %f conversion this would mean printing around 5000 characters, and the printf functions provided are not built to handle that. If you may have long double values in excess of 10^300, strongly consider using %e or %g.
 
 # Compilation
-The algorithm used to convert floating point number uses 128-bit unsigned integers provided by GCC's "__uint128_t" type.
+The algorithm used to convert floating point numbers uses 128-bit unsigned integers provided by GCC's "__uint128_t" type.
 
 # Ongoing work
 Implemented formats  d, u, x, o, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, L  and the  #  flag.
