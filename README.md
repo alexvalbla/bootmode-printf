@@ -22,7 +22,7 @@ The functions asprintf() and vasprintf() are not implemented: through their argu
 # Floating point numbers
 Variables or constants of type "float" are converted to type "double" implicitly.
 This the aforementioned printf functions can print both "double" and long "double" arguments (via the 'L' modifier).
-Note that "double" is taken to be a IEEE-754 64-bit floating point number, and long "double" is taken to be a IEEE-754 80-bit extended precision floating point number that is padded with zeros on the left up to 128 bits. I fthis is not the case in your context, you can edit the decomposeDouble() and decomposeLongDouble() functions in <conversion.c>.
+Note that "double" is taken to be a IEEE-754 64-bit floating point number, and long "double" is taken to be a IEEE-754 80-bit extended precision floating point number that is padded with zeros on the left up to 128 bits. If this is not the case in your context, you can edit the decomposeDouble() and decomposeLongDouble() functions in <conversion.c>.
 FLoating point conversions are precise up to the 17th digit after the decimal point if you were to write them in scientific notation.
 Percision for floating point conversions id capped at 18 or 19 depending on the format so as not to show more than 19 significant digits, as the conversion algorithm used cannot give us more than that.
 The conversion algorithm is explained given in the file <algorithm.pdf>.
