@@ -26,7 +26,7 @@ Note that "double" is taken to be a IEEE-754 64-bit floating point number, and l
 FLoating point conversions are precise up to the 17th digit after the decimal point if you were to write them in scientific notation.
 Percision for floating point conversions id capped at 18 or 19 depending on the format so as not to show more than 19 significant digits, as the conversion algorithm used cannot give us more than that.
 The conversion algorithm is explained given in the file <algorithm.pdf>.
-Warning for the %f conversion with long double: long doubles can range up to roughly 10^4932. With the %f conversion this would mean printing around 5000 characters in some cases, and the printf functions provided are not built to handle that. If you may have long double values in excess of 10^300, it's safer to use %e or %g.
+WARNING: values of "long doubles" can range up to roughly 10^4932. With the %f conversion this would mean printing around 5000 characters, and the printf functions provided are not built to handle that. If you may have long double values in excess of 10^300, strongly consider using %e or %g.
 
 # Compilation
 The algorithm used to convert floating point number uses 128-bit unsigned integers provided by GCC's "__uint128_t" type.
