@@ -13,6 +13,7 @@ The following functions are implemented:
 - snprintf()
 - sprintf()
 - printf()
+
 Note that these are declared in upper case letters in the code (e.g. VSNPRINTF) in <print.c> and <print.h>. This was in order to develop and test them without conflict with the standard C library.
 The heart of the project is the vsnprintf() function. All of the other functions are essentially wrappers for it.
 The functions fprintf and vfprintf are not implemented, as these would require a fputc() and fputs() to be defined in the target environment. Again, if you are able to define a fputc() function in your target environment (and also, therefore, a fputs() function), you can easily implement fprintf() and vfprintf() as wrappers to the implemented vsnprintf() function.
