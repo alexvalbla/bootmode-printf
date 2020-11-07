@@ -20,7 +20,7 @@ The functions fprintf and vfprintf are not implemented, as these would require a
 The functions asprintf() and vasprintf() are not implemented: through their argument "ret", they return a pointer to dynamically allocated memory containing the formatted string. The problem is that in our context, we cannot use the system call malloc().
 
 # Floating point numbers
-Variables or constants of type <float> are implicitly converted to <double> in <va_list> objects.
+Variables or constants of type <float> are implicitly converted to <double>.
 This the aforementioned printf functions can print both <double> and <long double> arguments (via the 'L' modifier).
 Note that <double> is taken to be a IEEE-754 64-bit floating point number, and <long double> is taken to be a IEEE-754 80-bit extended precision floating point number.
 FLoating point conversions are precise up to the 17th digit after the decimal point if you were to write them in scientific notation.
