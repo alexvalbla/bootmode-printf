@@ -45,6 +45,9 @@ int convert_d(va_list ap, char mods[2], char *str){
   else if(mods[0] == 'h' && mods[1] == 'h'){
     a = va_arg(ap, int);
   }
+  else if(mods[0] == 'z' && mods[1] == '\0'){
+    a = va_arg(ap, ssize_t);
+  }
   else{
     a = va_arg(ap, int);
   }
@@ -65,6 +68,9 @@ int convert_u(va_list ap, char mods[2], char *str){
   else if(mods[0] == 'h' && mods[1] == 'h'){
     a = va_arg(ap, unsigned int);
   }
+  else if(mods[0] == 'z' && mods[1] == '\0'){
+    a = va_arg(ap, size_t);
+  }
   else{
     a = va_arg(ap, unsigned int);
   }
@@ -77,7 +83,7 @@ int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     a = va_arg(ap, unsigned long);
   }
   else if(mods[0] == 'l' && mods[1] == 'l'){
-    a = va_arg(ap, unsigned long long);
+    a = (uint64_t)va_arg(ap, unsigned long long);
   }
   else if(mods[0] == 'h' && mods[1] == '\0'){
     a = va_arg(ap, unsigned int);
@@ -85,7 +91,11 @@ int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   else if(mods[0] == 'h' && mods[1] == 'h'){
     a = va_arg(ap, unsigned int);
   }
+  else if(mods[0] == 'z' && mods[1] == '\0'){
+    a = va_arg(ap, size_t);
+  }
   else{
+    printf("hello3\n");
     a = va_arg(ap, unsigned int);
   }
   return int_fmt_x(a, str, prec, flags);
@@ -105,10 +115,19 @@ int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   else if(mods[0] == 'h' && mods[1] == 'h'){
     a = va_arg(ap, unsigned int);
   }
+  else if(mods[0] == 'z' && mods[1] == '\0'){
+    a = va_arg(ap, size_t);
+  }
   else{
     a = va_arg(ap, unsigned int);
   }
   return int_fmt_o(a, str, prec, flags);
+}
+
+int convert_p(va_list ap, char *str, uint16_t prec, uint8_t flags){
+  flags |= FLAG_ALTF;
+  uint64_t a = (uint64_t)va_arg(ap, void *);
+  return int_fmt_x(a, str, prec, flags);
 }
 
 void convert_n(va_list ap, char mods[2], ssize_t total){
@@ -207,7 +226,7 @@ int int_fmt_x(uint64_t a, char *str, uint16_t prec, uint8_t flags){
     if(h < 10)
       str[i++] = '0'+h;
     else
-      str[i++] = tmp_c+h;
+      str[i++] = tmp_c-10+h;
   }
   while(i < prec){
     str[i++] = '0';

@@ -104,13 +104,12 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
       }
 
       //length modifiers
-      mods[0] = '\0';
-      mods[1] = '\0';
       k = 0;
       while(fmt[i] == 'l' || fmt[i] == 'h' || fmt[i] == 'L' || fmt[i] == 'z'){
         //absorb all length modifiers
-        if(k++ < 2)
+        if(k < 2)
           mods[k] = fmt[i];
+        k++;
         i++;
       }
       if(k > 2){
@@ -138,6 +137,10 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
 
         case 'o':
           length = convert_o(ap, mods, tmp, prec, flags);
+          break;
+
+        case 'p':
+          length = convert_p(ap, tmp, prec, flags);
           break;
 
         case 'n':

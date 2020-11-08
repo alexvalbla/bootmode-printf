@@ -26,6 +26,8 @@ int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
 
 int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
+int convert_p(va_list ap, char *str, uint16_t prec, uint8_t flags);
+
 void convert_n(va_list ap, char mods[2], ssize_t total);
 
 
@@ -36,7 +38,6 @@ int int_fmt_u(uint64_t a, char *str);
 int int_fmt_x(uint64_t a, char *str, uint16_t prec, uint8_t flags);
 
 int int_fmt_o(uint64_t a, char *str, uint16_t prec, uint8_t flags);
-
 
 
 int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
