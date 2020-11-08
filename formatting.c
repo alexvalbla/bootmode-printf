@@ -31,7 +31,7 @@ void PUTS(char *s){
 
 //integer type to string conversion functions
 
-int convert_d(va_list ap, char mods[2], char *str, uint8_t flags){
+int convert_d(va_list ap, char mods[2], char *str){
   int64_t a;
   if(mods[0] == 'l' && mods[1] == '\0'){
     a = va_arg(ap, long);
@@ -48,10 +48,10 @@ int convert_d(va_list ap, char mods[2], char *str, uint8_t flags){
   else{
     a = va_arg(ap, int);
   }
-  return int_fmt_d(a, str, flags);
+  return int_fmt_d(a, str);
 }
 
-int convert_u(va_list ap, char mods[2], char *str, uint8_t flags){
+int convert_u(va_list ap, char mods[2], char *str){
   uint64_t a;
   if(mods[0] == 'l' && mods[1] == '\0'){
     a = va_arg(ap, unsigned long);
@@ -68,7 +68,7 @@ int convert_u(va_list ap, char mods[2], char *str, uint8_t flags){
   else{
     a = va_arg(ap, unsigned int);
   }
-  return int_fmt_u(a, str, flags);
+  return int_fmt_u(a, str);
 }
 
 int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
@@ -137,7 +137,7 @@ void convert_n(va_list ap, char mods[2], ssize_t total){
 
 
 
-int int_fmt_d(int64_t a, char *str, uint8_t flags){
+int int_fmt_d(int64_t a, char *str){
   if(a == 0){
     str[0] = '0';
     str[1] = '\0';
@@ -164,7 +164,7 @@ int int_fmt_d(int64_t a, char *str, uint8_t flags){
   return i;
 }
 
-int int_fmt_u(uint64_t a, char *str, uint8_t flags){
+int int_fmt_u(uint64_t a, char *str){
   if(a == 0){
     str[0] = '0';
     str[1] = '\0';
@@ -319,30 +319,6 @@ int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
   return fp_special_case(class, str);
 }
 
-int fp_special_case(fpclass_t class, char *str){
-  int i = 0;
-  if(class == POS_INF){
-    str[i++] = 'i';
-    str[i++] = 'n';
-    str[i++] = 'f';
-    str[i] = '\0';
-  }
-  else if(class == NEG_INF){
-    str[i++] = '-';
-    str[i++] = 'i';
-    str[i++] = 'n';
-    str[i++] = 'f';
-    str[i] = '\0';
-  }
-  else{
-    str[i++] = 'n';
-    str[i++] = 'a';
-    str[i++] = 'n';
-    str[i] = '\0';
-  }
-  return i;
-}
-
 int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags){
   //adjust precision
   if(flags&FLAG_PREC){
@@ -350,7 +326,7 @@ int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
       prec = 18;
   }
   else{
-    //precision missing, taken as 6
+    //no precision specified, taken as 6
     prec = 6;
   }
 
@@ -380,7 +356,7 @@ int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  int_fmt_u(n,d,0);
+  int_fmt_u(n,d);
   //we want 1 before the decimal point, 18 after
   //so we increase the decimal exponent by 18
   F += 18;
@@ -397,7 +373,7 @@ int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
     e[k] = '\0';
   }
   else{
-    int_fmt_d(F,e,0);
+    int_fmt_d(F,e);
   }
 
   //write decimal mantissa
@@ -430,7 +406,7 @@ int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
       prec = 19;
   }
   else{
-    //precision missing, taken as 6
+    //no precision specified, taken as 6
     prec = 6;
   }
   if(prec > 18)
@@ -457,7 +433,7 @@ int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
   int l = 20;
   char d[l]; //to write decimal mantissa
   //n has 19 digits
-  int_fmt_u(n,d,0);
+  int_fmt_u(n,d);
 
   //write decimal mantissa
   int digits = 19+F; //digits before decimal point
@@ -528,7 +504,7 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
       prec = 1;
   }
   else{
-    //precision missing, taken as 6
+    //no precision specified, taken as 6
     prec = 6;
   }
 
@@ -553,13 +529,13 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
   char d[l]; //to write decimal mantissa
   char e[l]; //to write decimal exponent
   //n has 19 digits
-  int_fmt_u(n,d,0);
+  int_fmt_u(n,d);
 
   //if written in 'e'-format, the exponent would be F+18
   if(F+18 >= (int)prec || F+18 < -4){
     //'e'-format conversion
     F += 18;
-    int_fmt_d(F,e,0);
+    int_fmt_d(F,e);
     str[i++] = d[0];
     if(prec > 1 || (flags&FLAG_ALTF)){
       str[i++] = '.';
@@ -631,5 +607,29 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
     }
   }
   str[i] = '\0';
+  return i;
+}
+
+int fp_special_case(fpclass_t class, char *str){
+  int i = 0;
+  if(class == POS_INF){
+    str[i++] = 'i';
+    str[i++] = 'n';
+    str[i++] = 'f';
+    str[i] = '\0';
+  }
+  else if(class == NEG_INF){
+    str[i++] = '-';
+    str[i++] = 'i';
+    str[i++] = 'n';
+    str[i++] = 'f';
+    str[i] = '\0';
+  }
+  else{
+    str[i++] = 'n';
+    str[i++] = 'a';
+    str[i++] = 'n';
+    str[i] = '\0';
+  }
   return i;
 }

@@ -40,7 +40,7 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
     if(fmt[i] != '%'){
       //most commun case: character other than '%'
       // -> simply add it to str
-      if(total < size-1)
+      if(total < (ssize_t)size-1)
         str[str_idx++] = fmt[i];
       total++;
       i++;
@@ -51,7 +51,7 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
 
       if(fmt[i] == '%'){
         //jus wanted to print a '%' character, phew...
-        if(total < size)
+        if(total < (ssize_t)size-1)
           str[str_idx++] = '%';
         i++;
         total++;
@@ -123,11 +123,11 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
       switch(fmt[i]){
         case 'i':
         case 'd':
-          length = convert_d(ap, mods, tmp, flags);
+          length = convert_d(ap, mods, tmp);
           break;
 
         case 'u':
-          length = convert_u(ap, mods, tmp, flags);
+          length = convert_u(ap, mods, tmp);
           break;
 
         case 'X':
