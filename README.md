@@ -34,7 +34,7 @@ The algorithm used to convert floating point numbers uses 128-bit unsigned integ
 # Ongoing work
 Implemented formats  i, d, u, x, o, p, n, c, e, E, f, F, g, F  modifiers l, ll, h, hh, z, L  and the  #  flag.
 Working on formats  a, A, s  modifiers j, t and flags  0, +, -, and ' ' (whitespace).
-The padding flags  0', '+', '-', and ' '  can be specified in the format string, they just don't do anything yet.
+The padding flags  0, +, -, and ' '  can be specified in the format string, they just don't do anything yet.
 Same for the field width modifier, it can be specified in the format string, but doesn't do anything yet.
 The precision modifier is implemented for floating point conversions, but not yet for all integer conversions.
 Right now, besides floating point conversions, precision is capped at 40.
