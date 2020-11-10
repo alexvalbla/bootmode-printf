@@ -95,7 +95,6 @@ int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     a = va_arg(ap, size_t);
   }
   else{
-    printf("hello3\n");
     a = va_arg(ap, unsigned int);
   }
   return int_fmt_x(a, str, prec, flags);
@@ -125,9 +124,12 @@ int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
 }
 
 int convert_p(va_list ap, char *str, uint16_t prec, uint8_t flags){
-  flags |= FLAG_ALTF;
+  //only FLAG_LADJ defined
+  //conversion as #x
+  uint8_t aux = flags&FLAG_LADJ;
+  aux |= FLAG_ALTF;
   uint64_t a = (uint64_t)va_arg(ap, void *);
-  return int_fmt_x(a, str, prec, flags);
+  return int_fmt_x(a, str, prec, aux);
 }
 
 void convert_n(va_list ap, char mods[2], ssize_t total){
