@@ -4,7 +4,7 @@
 #include "conversion.h"
 
 #define FLAG_ALTF 0001 //alternate form
-#define FLAG_ZPAD 0002 //zero-padded
+#define FLAG_ZERO 0002 //zero-padded
 #define FLAG_LADJ 0004 //left-adjusted
 #define FLAG_WSPC 0010 //white space
 #define FLAG_SIGN 0020 //sign
@@ -13,14 +13,9 @@
 #define FLAG_WDTH 0200 //field width
 
 
-void str_rev(char *s, size_t size);
+int convert_d(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
-void PUTS(char *s);
-
-
-int convert_d(va_list ap, char mods[2], char *str);
-
-int convert_u(va_list ap, char mods[2], char *str);
+int convert_u(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
 int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
@@ -28,17 +23,11 @@ int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
 
 int convert_p(va_list ap, char *str, uint16_t prec, uint8_t flags);
 
+int convert_c(va_list ap, char *str);
+
+int convert_s(va_list ap, char *str, uint16_t prec, uint8_t flags);
+
 void convert_n(va_list ap, char mods[2], ssize_t total);
-
-
-int int_fmt_d(int64_t a, char *str);
-
-int int_fmt_u(uint64_t a, char *str);
-
-int int_fmt_x(uint64_t a, char *str, uint16_t prec, uint8_t flags);
-
-int int_fmt_o(uint64_t a, char *str, uint16_t prec, uint8_t flags);
-
 
 int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
@@ -47,13 +36,7 @@ int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
 int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
 
-int fp_fmt_e(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags);
-
-int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags);
-
-int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags);
-
-int fp_special_case(fpclass_t class, char *str);
+void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width);
 
 
 #endif

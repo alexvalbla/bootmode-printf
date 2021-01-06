@@ -2,7 +2,7 @@ NAME = libprintf.a
 HEADER = libprintf.h
 files = conversion.c formatting.c print.c
 file_objects = $(files:.c=.o)
-release_flags = -Wall -Wextra -Werror -O3
+release_flags = -Wall -Wextra -O3
 
 all: $(NAME)
 
