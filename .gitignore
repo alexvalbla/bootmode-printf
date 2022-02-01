@@ -3,3 +3,4 @@ test.c
 Makefile.test
 libprintf.*
 latex/
+*.o
