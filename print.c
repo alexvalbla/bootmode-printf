@@ -20,7 +20,7 @@ static void output_to_stdout(char *str){
     }
 }
 
-int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
+int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
     size_t str_idx = 0; //where we are on the output string str
     size_t i = 0; //format string index
 
@@ -259,21 +259,21 @@ int VSNPRINTF(char *str, size_t size, const char *fmt, va_list ap){
 
 //derivatives
 
-int VSPRINTF(char *str, const char *format, va_list ap){
+int bootmode_vsprintf(char *str, const char *format, va_list ap){
     int res;
-    res = VSNPRINTF(str, SIZE_MAX, format, ap);
+    res = bootmode_vsnprintf(str, SIZE_MAX, format, ap);
     return res;
 }
 
-int VPRINTF(const char *format, va_list ap){
+int bootmode_vprintf(const char *format, va_list ap){
     char buff[DFLT_SIZE];
     int res;
     va_list aq;
     va_copy(aq,ap);
-    res = VSNPRINTF(buff, DFLT_SIZE, format, ap);
+    res = bootmode_vsnprintf(buff, DFLT_SIZE, format, ap);
     if(res >= DFLT_SIZE){
         char *str = (char *)alloca((res+1)*sizeof(char));
-        VSNPRINTF(str, res+1, format, aq);
+        bootmode_vsnprintf(str, res+1, format, aq);
         output_to_stdout(str);
     }
     else{
@@ -283,26 +283,26 @@ int VPRINTF(const char *format, va_list ap){
     return res;
 }
 
-int SNPRINTF(char *str, size_t size, const char *format, ...){
+int bootmode_snprintf(char *str, size_t size, const char *format, ...){
     va_list ap;
     va_start(ap, format);
-    int res = VSNPRINTF(str, size, format, ap);
+    int res = bootmode_vsnprintf(str, size, format, ap);
     va_end(ap);
     return res;
 }
 
-int SPRINTF(char *str, const char *format, ...){
+int bootmode_sprintf(char *str, const char *format, ...){
     va_list ap;
     va_start(ap, format);
-    int res = VSPRINTF(str, format, ap);
+    int res = bootmode_vsprintf(str, format, ap);
     va_end(ap);
     return res;
 }
 
-int PRINTF(const char *format, ...){
+int bootmode_printf(const char *format, ...){
     va_list ap;
     va_start(ap, format);
-    int res = VPRINTF(format, ap);
+    int res = bootmode_vprintf(format, ap);
     va_end(ap);
     return res;
 }
