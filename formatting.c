@@ -242,7 +242,7 @@ int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     else{
         class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
     }
-    if(class == NUMBER){
+    if(class == BM_NUMBER){
         if(m == 0){
             n = 0;
         }
@@ -266,7 +266,7 @@ int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     else{
         class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
     }
-    if(class == NUMBER){
+    if(class == BM_NUMBER){
         if(m == 0){
             n = 0;
         }
@@ -290,7 +290,7 @@ int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     else{
         class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
     }
-    if(class == NUMBER){
+    if(class == BM_NUMBER){
         if(m == 0){
             n = 0;
         }
@@ -796,13 +796,13 @@ int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t fl
 
 int fp_special_case(fpclass_t class, char *str, uint8_t flags){
     int i = 0;
-    if(class == NAN){
+    if(class == BM_NAN){
         str[i++] = 'n';
         str[i++] = 'a';
         str[i++] = 'n';
         str[i] = '\0';
     }
-    else if(class == POS_INF){
+    else if(class == BM_POS_INF){
         if(flags&FLAG_SIGN){
             str[i++] = '+';
         }
@@ -815,7 +815,7 @@ int fp_special_case(fpclass_t class, char *str, uint8_t flags){
         str[i] = '\0';
     }
     else{
-        //NEG_INF
+        //BM_NEG_INF
         str[i++] = '-';
         str[i++] = 'i';
         str[i++] = 'n';
