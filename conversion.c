@@ -140,10 +140,7 @@ int Tau(int64_t F, int Fh, int Fl){
 }
 
 void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
-        int Fh, Fl, tau;
-        uint64_t t1H, t1L, t2H, t2L;
-        __uint128_t TH, TM1, TM2, TL, cin, th, tm1, tm2, tl;
-
+        int Fh, Fl; // Fh = div(F,256), Fl = rem(F,256), and 0 <= rem < 256
         if (F >= 0) {
                 Fh = F >> 8;
                 Fl = F & 0xFF;
@@ -160,31 +157,39 @@ void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
                 }
         }
 
-        t1H = t1High[Fh+Fhbias];
-        t1L = t1Low[Fh+Fhbias];
-        t2H = t2High[Fl];
-        t2L = t2Low[Fl];
-        TL = (__uint128_t)t2L*t1L;
-        TH = (__uint128_t)t2H*t1H;
-        TM1 = (__uint128_t)t1H*t2L;
-        TM2 = (__uint128_t)t1L*t2H;
+        uint64_t t1H = t1High[Fh+Fhbias];
+        uint64_t t1L = t1Low[Fh+Fhbias];
+        uint64_t t2H = t2High[Fl];
+        uint64_t t2L = t2Low[Fl];
 
-        tl = (((__uint128_t)1<<64)-1)&TL;
-        tm1 = (TM1&(((__uint128_t)1<<64)-1))+(TM2&(((__uint128_t)1<<64)-1))+(TL>>64);
-        cin = tm1>>64;
-        tm1 -= cin<<64;
-        tm2 = (TH&(((__uint128_t)1<<64)-1))+((TM1>>64)+(TM2>>64))+cin;
-        cin = tm2>>64;
-        tm2 -= cin<<64;
-        th = (TH>>64)+cin;
+        __uint128_t TL = (__uint128_t)t2L*t1L;
+        __uint128_t TM1 = (__uint128_t)t1H*t2L;
+        __uint128_t TM2 = (__uint128_t)t1L*t2H;
+        __uint128_t TH = (__uint128_t)t2H*t1H;
 
-        tau = Tau(F,Fh,Fl);
+
+        __uint128_t th, tm1, tm2;
+        __uint128_t carry;
+        uint64_t MASK_L64 = 0xFFFFFFFFFFFFFFFF; // for 64 low-order bits
+
+        tm1 = (TM1 & MASK_L64) + (TM2 & MASK_L64) + (TL >> 64);
+        carry = tm1 >> 64;
+        tm1 &= MASK_L64;
+
+        tm2 = (TH & MASK_L64) + (TM1 >> 64) + (TM2 >> 64) + carry;
+        carry = tm2 >> 64;
+        tm2 &= MASK_L64;
+
+        th = (TH >> 64) + carry;
+
+
+        int tau = Tau(F,Fh,Fl);
         th <<= tau;
         tm2 <<= tau;
         tm2 += tm1 >> (64-tau);
-        cin = tm2>>64;
-        tm2 -= cin<<64;
-        th += cin;
+        carry = tm2 >> 64;
+        tm2 -= carry << 64;
+        th += carry;
 
         //t = tH*2^(64)+tL
         *tH = (uint64_t)th;
