@@ -144,8 +144,21 @@ void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
         uint64_t t1H, t1L, t2H, t2L;
         __uint128_t TH, TM1, TM2, TL, cin, th, tm1, tm2, tl;
 
-        Fh = F>>8;
-        Fl = F-(Fh<<8);
+        if (F >= 0) {
+                Fh = F >> 8;
+                Fl = F & 0xFF;
+        } else {
+                // careful with division && modulus with negative integers
+                int32_t minusF = -F;
+                int32_t quo = minusF >> 8;
+                int32_t rem = minusF & 0xFF;
+                Fh = -quo;
+                Fl = -rem;
+                if (rem != 0) {
+                        --Fh;
+                        Fl += 256;
+                }
+        }
 
         t1H = t1High[Fh+Fhbias];
         t1L = t1Low[Fh+Fhbias];
