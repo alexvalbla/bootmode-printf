@@ -21,14 +21,16 @@ The functions asprintf() and vasprintf() are not implemented: through their argu
 
 # Floating point numbers
 Variables or constants of type "float" are converted to type "double" implicitly.
-The aforementioned printf-family functions can print both "double" and long "double" arguments (via the 'L' modifier).
-Note that "double" is taken to be a IEEE-754 64-bit floating point number, and "long double" is taken to be a IEEE-754 80-bit extended precision floating point number that is padded with zeros on the left up to 128 bits. If this is not the case in your context, you can edit the decomposeDouble() and decomposeLongDouble() functions in conversion.c.
+The aforementioned printf-family functions can print both "double" and "long double" arguments (via the 'L' modifier).
+Note that "double" is taken to be a IEEE-754 64-bit floating point number, and "long double" is taken to be a IEEE-754 80-bit extended precision floating point number.
+As currently implemented, the conversion code supposes that these are padded on the left up to 128 bits, i.e. reading from left to right: 48 padding bits, 1 sign bit, 15 exponent bits, 64 mantissa bits (with the leading mantissa bit being explicit). If this is not the case in your context, you can edit the decomposeDouble() and decomposeLongDouble() functions in conversion.c.
 FLoating point conversions are accurate up to the 17th digit after the decimal point in scientific notation.
-Precision for floating point conversions is capped at 18 or 19 depending on the format so as not to show more than 19 significant digits, as the conversion algorithm used cannot give us more than that.
+Precision for floating point conversions is capped at 18 or 19 depending on the format (%e, %f or %g) so as not to show more than 19 significant figures (for instance 18 digits after the decimal point when using %e format: %.500e -> D.DDDDDDDDDDDDDDDDDDe[+/-]XYZ ), as the conversion algorithm used cannot give us more than that.
 The conversion algorithm is explained given in the file algorithm.pdf.
 WARNING: values of "long doubles" can range up to roughly 10^4932. With the %f conversion format this would mean printing around 5000 characters, and these printf functions provided are not built to handle that. If you may have long double values in excess of 10^300, strongly consider using %e or %g.
 
 # Compilation
+The code was written to be compiled by GCC: in particular, it makes use of "// fall through" comments to silence warning from "switch" statement cases that to not include a "break" statement.
 The algorithm used to convert floating point numbers uses 128-bit unsigned integers provided by GCC's "__uint128_t" type.
 
 # Ongoing work
