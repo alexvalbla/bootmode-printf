@@ -143,6 +143,7 @@ int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
 
                 case 'X':
                     flags |= FLAG_UCAS;
+                    // fall through
                 case 'x':
                     length = convert_x(ap, mods, tmp, prec, flags);
                     break;
@@ -157,18 +158,21 @@ int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
 
                 case 'E':
                     flags |= FLAG_UCAS;
+                    // fall through
                 case 'e':
                     length = convert_e(ap, mods, tmp, prec, flags);
                     break;
 
                 case 'F':
                     flags |= FLAG_UCAS;
+                    // fall through
                 case 'f':
                     length = convert_f(ap, mods, tmp, prec, flags);
                     break;
 
                 case 'G':
                     flags |= FLAG_UCAS;
+                    // fall through
                 case 'g':
                     length = convert_g(ap, mods, tmp, prec, flags);
                     break;

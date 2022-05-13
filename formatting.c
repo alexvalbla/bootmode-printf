@@ -853,6 +853,7 @@ void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_
                 c = ' ';
             }
             integer = 1;
+            // fall through
 
         case 'E':
         case 'e':
