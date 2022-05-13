@@ -95,9 +95,9 @@ int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
             }
 
             //precision modifier
+            prec = 0;
             if(fmt[i] == '.'){
                 flags |= FLAG_PREC;
-                prec = 0;
                 i++;
                 while(fmt[i] >= '0' && fmt[i] <= '9'){
                     prec = prec*10 + (fmt[i++] - '0');
