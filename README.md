@@ -39,7 +39,8 @@ Length modifiers l, ll, h, hh, z, L are implemented.
 Flags #, 0, +, -,  and  ' ' (whitespace) are implemented.
 Field width and precision modifiers are implemented.
 
-Working on formats  a, A  and length modifiers  j, t, plus checking for bugs.
+Formats  a, A  and length modifiers  j, t  are not yet implemented
+Work ins ongoing as of 12th of may 2022 (re-engineering of the code + bug checking).
 
 
 All rights reserved.
