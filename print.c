@@ -1,16 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <limits.h>
-#include "print.h"
+#include "bm_utils.h"
 #include "formatting.h"
+
 
 //adjustable if needed
 #define DFLT_SIZE 1024
 #define MAX_PREC 300
 #define MAX_FIELD_WIDTH 512
-
 
 
 static void output_to_stdout(char *str){
@@ -20,7 +15,7 @@ static void output_to_stdout(char *str){
     }
 }
 
-int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
+int bootmode_vsnprintf(char *str, size_t size, const char *fmt, bm_va_list ap){
     size_t str_idx = 0; //where we are on the output string str
     size_t i = 0; //format string index
 
@@ -263,17 +258,17 @@ int bootmode_vsnprintf(char *str, size_t size, const char *fmt, va_list ap){
 
 //derivatives
 
-int bootmode_vsprintf(char *str, const char *format, va_list ap){
+int bootmode_vsprintf(char *str, const char *format, bm_va_list ap){
     int res;
     res = bootmode_vsnprintf(str, SIZE_MAX, format, ap);
     return res;
 }
 
-int bootmode_vprintf(const char *format, va_list ap){
+int bootmode_vprintf(const char *format, bm_va_list ap){
     char buff[DFLT_SIZE];
     int res;
-    va_list aq;
-    va_copy(aq,ap);
+    bm_va_list aq;
+    bm_va_copy(aq,ap);
     res = bootmode_vsnprintf(buff, DFLT_SIZE, format, ap);
     if(res >= DFLT_SIZE){
         char *str = (char *)alloca((res+1)*sizeof(char));
@@ -283,30 +278,30 @@ int bootmode_vprintf(const char *format, va_list ap){
     else{
         output_to_stdout(buff);
     }
-    va_end(aq);
+    bm_va_end(aq);
     return res;
 }
 
 int bootmode_snprintf(char *str, size_t size, const char *format, ...){
-    va_list ap;
-    va_start(ap, format);
+    bm_va_list ap;
+    bm_va_start(ap, format);
     int res = bootmode_vsnprintf(str, size, format, ap);
-    va_end(ap);
+    bm_va_end(ap);
     return res;
 }
 
 int bootmode_sprintf(char *str, const char *format, ...){
-    va_list ap;
-    va_start(ap, format);
+    bm_va_list ap;
+    bm_va_start(ap, format);
     int res = bootmode_vsprintf(str, format, ap);
-    va_end(ap);
+    bm_va_end(ap);
     return res;
 }
 
 int bootmode_printf(const char *format, ...){
-    va_list ap;
-    va_start(ap, format);
+    bm_va_list ap;
+    bm_va_start(ap, format);
     int res = bootmode_vprintf(format, ap);
-    va_end(ap);
+    bm_va_end(ap);
     return res;
 }

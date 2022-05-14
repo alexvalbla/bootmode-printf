@@ -1,13 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include "conversion.h"
 #include "formatting.h"
 
 
 
-//local header
+// local header
 
 int int_fmt_d(int64_t a, char *str, uint16_t prec, uint8_t flags);
 
@@ -62,115 +57,115 @@ static void pad_str(char *str, uint16_t n, char c){
 
 //argument extraction functions
 
-int convert_d(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_d(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     int64_t a;
     if(mods[0] == 'l' && mods[1] == '\0'){
-        a = va_arg(ap, long);
+        a = bm_va_arg(ap, long);
     }
     else if(mods[0] == 'l' && mods[1] == 'l'){
-        a = va_arg(ap, long long);
+        a = bm_va_arg(ap, long long);
     }
     else if(mods[0] == 'h' && mods[1] == '\0'){
-        a = va_arg(ap, int);
+        a = bm_va_arg(ap, int);
     }
     else if(mods[0] == 'h' && mods[1] == 'h'){
-        a = va_arg(ap, int);
+        a = bm_va_arg(ap, int);
     }
     else if(mods[0] == 'z' && mods[1] == '\0'){
-        a = va_arg(ap, ssize_t);
+        a = bm_va_arg(ap, ssize_t);
     }
     else{
-        a = va_arg(ap, int);
+        a = bm_va_arg(ap, int);
     }
     return int_fmt_d(a, str, prec, flags);
 }
 
-int convert_u(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_u(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     uint64_t a;
     if(mods[0] == 'l' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned long);
+        a = bm_va_arg(ap, unsigned long);
     }
     else if(mods[0] == 'l' && mods[1] == 'l'){
-        a = va_arg(ap, unsigned long long);
+        a = bm_va_arg(ap, unsigned long long);
     }
     else if(mods[0] == 'h' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'h' && mods[1] == 'h'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'z' && mods[1] == '\0'){
-        a = va_arg(ap, size_t);
+        a = bm_va_arg(ap, size_t);
     }
     else{
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     return int_fmt_u(a, str, prec, flags);
 }
 
-int convert_x(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_x(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     uint64_t a;
     if(mods[0] == 'l' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned long);
+        a = bm_va_arg(ap, unsigned long);
     }
     else if(mods[0] == 'l' && mods[1] == 'l'){
-        a = (uint64_t)va_arg(ap, unsigned long long);
+        a = (uint64_t)bm_va_arg(ap, unsigned long long);
     }
     else if(mods[0] == 'h' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'h' && mods[1] == 'h'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'z' && mods[1] == '\0'){
-        a = va_arg(ap, size_t);
+        a = bm_va_arg(ap, size_t);
     }
     else{
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     return int_fmt_x(a, str, prec, flags);
 }
 
-int convert_o(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_o(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     uint64_t a;
     if(mods[0] == 'l' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned long);
+        a = bm_va_arg(ap, unsigned long);
     }
     else if(mods[0] == 'l' && mods[1] == 'l'){
-        a = va_arg(ap, unsigned long long);
+        a = bm_va_arg(ap, unsigned long long);
     }
     else if(mods[0] == 'h' && mods[1] == '\0'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'h' && mods[1] == 'h'){
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     else if(mods[0] == 'z' && mods[1] == '\0'){
-        a = va_arg(ap, size_t);
+        a = bm_va_arg(ap, size_t);
     }
     else{
-        a = va_arg(ap, unsigned int);
+        a = bm_va_arg(ap, unsigned int);
     }
     return int_fmt_o(a, str, prec, flags);
 }
 
-int convert_p(va_list ap, char *str, uint16_t prec, uint8_t flags){
+int convert_p(bm_va_list ap, char *str, uint16_t prec, uint8_t flags){
     //only FLAG_LADJ defined
     //conversion as #x
     uint8_t aux = flags|FLAG_ALTF;
-    void *p = va_arg(ap, void*);
+    void *p = bm_va_arg(ap, void*);
     return int_fmt_x((unsigned long long)p, str, prec, aux);
 }
 
-int convert_c(va_list ap, char *str){
-    char c = (char)va_arg(ap, int);
+int convert_c(bm_va_list ap, char *str){
+    char c = (char)bm_va_arg(ap, int);
     str[0] = c;
     str[1] = '\0';
     return 1;
 }
 
-int convert_s(va_list ap, char *str, uint16_t prec, uint8_t flags){
-    char *s = va_arg(ap, char *);
+int convert_s(bm_va_list ap, char *str, uint16_t prec, uint8_t flags){
+    char *s = bm_va_arg(ap, char *);
     int l = 0;
     if(s == NULL){
         str[l++] = '(';
@@ -202,34 +197,34 @@ int convert_s(va_list ap, char *str, uint16_t prec, uint8_t flags){
     return l;
 }
 
-void convert_n(va_list ap, char mods[2], ssize_t total){
+void convert_n(bm_va_list ap, char mods[2], ssize_t total){
     if(mods[0] == 'l' && mods[1] == '\0'){
-        long *n = va_arg(ap, long*);
+        long *n = bm_va_arg(ap, long*);
         *n = total;
     }
     else if(mods[0] == 'l' && mods[1] == 'l'){
-        long long *n = va_arg(ap, long long*);
+        long long *n = bm_va_arg(ap, long long*);
         *n = total;
     }
     else if(mods[0] == 'h' && mods[1] == '\0'){
-        short *n = (short*)va_arg(ap, int*);
+        short *n = (short*)bm_va_arg(ap, int*);
         *n = total;
     }
     else if(mods[0] == 'h' && mods[1] == 'h'){
-        char *n = (char*)va_arg(ap, int*);
+        char *n = (char*)bm_va_arg(ap, int*);
         *n = total;
     }
     else if(mods[0] == 'z' && mods[1] == '\0'){
-        ssize_t *n = va_arg(ap, ssize_t*);
+        ssize_t *n = bm_va_arg(ap, ssize_t*);
         *n = total;
     }
     else{
-        int *n = va_arg(ap, int*);
+        int *n = bm_va_arg(ap, int*);
         *n = total;
     }
 }
 
-int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_e(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     char s; //sign
     int32_t E; //binary exponent
     uint64_t m; //binary mantissa
@@ -237,10 +232,10 @@ int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     uint64_t n; //decimal mantissa
     fpclass_t class;
     if(mods[0] == 'L' && mods[1] == '\0'){
-        class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+        class = decomposeLongDouble(&s, &E, &m, bm_va_arg(ap, long double));
     }
     else{
-        class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+        class = decomposeDouble(&s, &E, &m, bm_va_arg(ap, double));
     }
     if(class == BM_NUMBER){
         if(m == 0){
@@ -253,7 +248,7 @@ int convert_e(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     return fp_special_case(class, str, flags);
 }
 
-int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_f(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     char s; //sign
     int32_t E; //binary exponent
     uint64_t m; //binary mantissa
@@ -261,10 +256,10 @@ int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     uint64_t n; //decimal mantissa
     fpclass_t class;
     if(mods[0] == 'L' && mods[1] == '\0'){
-        class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+        class = decomposeLongDouble(&s, &E, &m, bm_va_arg(ap, long double));
     }
     else{
-        class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+        class = decomposeDouble(&s, &E, &m, bm_va_arg(ap, double));
     }
     if(class == BM_NUMBER){
         if(m == 0){
@@ -277,7 +272,7 @@ int convert_f(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     return fp_special_case(class, str, flags);
 }
 
-int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
+int convert_g(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags){
     char s; //sign
     int32_t E; //binary exponent
     uint64_t m; //binary mantissa
@@ -285,10 +280,10 @@ int convert_g(va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags)
     uint64_t n; //decimal mantissa
     fpclass_t class;
     if(mods[0] == 'L' && mods[1] == '\0'){
-        class = decomposeLongDouble(&s, &E, &m, va_arg(ap, long double));
+        class = decomposeLongDouble(&s, &E, &m, bm_va_arg(ap, long double));
     }
     else{
-        class = decomposeDouble(&s, &E, &m, va_arg(ap, double));
+        class = decomposeDouble(&s, &E, &m, bm_va_arg(ap, double));
     }
     if(class == BM_NUMBER){
         if(m == 0){

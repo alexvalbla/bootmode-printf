@@ -1,6 +1,8 @@
-#ifndef CONVERSION
-#define CONVERSION
+#ifndef BM_CONVERSION_H
+#define BM_CONVERSION_H
 
+
+#include "bm_utils.h"
 
 typedef union{
   float f;
@@ -27,4 +29,4 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x);
 void decimalConversion(int32_t *F, uint64_t *n, int32_t E, uint64_t m);
 
 
-#endif
+#endif // conversion.h

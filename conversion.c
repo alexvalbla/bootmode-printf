@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include <stdio.h>
 #include "conversion.h"
 #include "tableT1.h"
 #include "tableT2.h"
