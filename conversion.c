@@ -117,27 +117,27 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x){
 //functions to compute the decimal exponent and mantissa
 //given the binary exponent and mantissa
 
-int64_t decimalExponent(int32_t E){
+static inline int64_t decimalExponent(int32_t E){
         // 13 bits max
         int64_t constantLog = 330985980541; //floor(2^40*log10(2))
         return (((int64_t)E * constantLog) >> 40)+1;
 }
 
-int32_t Delta(int64_t F){
+static inline int32_t Delta(int64_t F){
         // = floor(log2(5^(-F))), 14 bits max
         uint64_t constantLog = 2552986939188; //floor(log2(5)*2^40)
         return (int32_t)(((__int128_t)(-F)*constantLog) >> 40);
 }
 
-int64_t Sigma(int32_t E, int64_t F, int32_t delta){
+static inline int64_t Sigma(int32_t E, int64_t F, int32_t delta){
         return (E-F-126+delta);
 }
 
-int Tau(int64_t F, int Fh, int Fl){
+static inline int Tau(int64_t F, int Fh, int Fl){
         return 2-Delta(F)+Delta(256*Fh)+Delta(Fl);
 }
 
-void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
+static inline void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
         int Fh, Fl; // Fh = div(F,256), Fl = rem(F,256), and 0 <= rem < 256
         if (F >= 0) {
                 Fh = F >> 8;
@@ -194,7 +194,7 @@ void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL){
         *tL = (uint64_t)tm2;
 }
 
-void multiply_mt(int64_t F, uint64_t m, __uint128_t *nH, __uint128_t *nM, __uint128_t *nL){
+static inline void multiply_mt(int64_t F, uint64_t m, __uint128_t *nH, __uint128_t *nM, __uint128_t *nL){
         // returns m*t
         __uint128_t cin;
         uint64_t tH, tL;
@@ -215,7 +215,7 @@ void multiply_mt(int64_t F, uint64_t m, __uint128_t *nH, __uint128_t *nM, __uint
 }
 
 
-uint64_t decimalMantissa(int64_t F, uint64_t m, int32_t E){
+static inline uint64_t decimalMantissa(int64_t F, uint64_t m, int32_t E){
         int sigma;
         uint32_t shift;
 
@@ -241,8 +241,8 @@ uint64_t decimalMantissa(int64_t F, uint64_t m, int32_t E){
         return (uint64_t)nH;
 }
 
-void adjust_m(int32_t *E, uint64_t *m){
-        //we want 2^63 <= m < 2^64
+static inline void adjust_m(int32_t *E, uint64_t *m){
+        //we want 2^63 <= m < 2^64decimalMantissa
         if(*m < (((uint64_t)1) << 63)){
                 if(*m < (((uint64_t)1) << 32)){
                         *m <<= 32;
@@ -271,7 +271,7 @@ void adjust_m(int32_t *E, uint64_t *m){
         }
 }
 
-void adjust_n_and_F(uint64_t *n, int32_t *F){
+static inline void adjust_n_and_F(uint64_t *n, int32_t *F){
         //we want 10^18 <= n < 10^19
         if(*n >= (uint64_t)10000000000000000000u){
                 //n >= 10^19

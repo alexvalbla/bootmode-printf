@@ -8,7 +8,7 @@
 #define MAX_FIELD_WIDTH 512
 
 
-static void output_to_stdout(char *str){
+static inline void output_to_stdout(char *str){
     //unlike puts(), does not append '\n' character
     while(*str){
         putchar(*(str++));
