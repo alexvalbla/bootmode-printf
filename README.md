@@ -34,13 +34,14 @@ The code was written to be compiled by GCC: in particular, it makes use of "// f
 The algorithm used to convert floating point numbers uses 128-bit unsigned integers provided by GCC's "__uint128_t" type.
 
 # Ongoing work
-Formats i, d, u, x, o, p, n, c, s, e, E, f, F, g, F are implemented.
+Conversion formats i, d, u, x, o, p, n, c, s, e, E, f, F, g, F are implemented.
 Length modifiers l, ll, h, hh, z, L are implemented.
 Flags #, 0, +, -,  and  ' ' (whitespace) are implemented.
 Field width and precision modifiers are implemented.
 
-Formats  a, A  and length modifiers  j, t  are not yet implemented
-Work ins ongoing as of 12th of may 2022 (re-engineering of the code + bug checking).
+Formats  a, A  and length modifiers  j, t  are not yet implemented.
+Work is ongoing as of 12th of may 2022 (re-engineering of the code + bug checking).
+A new version **should** be available in the coming weeks, that adresses some of the limitations, cleans up and refactors the code, Makefile, and the algorithm.pdf explanatory file.
 
 
 All rights reserved.
