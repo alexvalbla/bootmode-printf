@@ -14,11 +14,11 @@ BIN=$(BINDIR)/main
 LIB=$(LIBDIR)/$(LIBNAME).a
 HEADER=$(LIBDIR)/$(LIBNAME).h
 
-all: $(LIB)
+all: $(OBJ) $(LIBDIR) $(LIB)
 
 release: CFLAGS=-Wall -O2 -DNDEBUG
 release: clean
-release: $(LIB)
+release: all
 
 $(LIB): $(OBJS)
 	ar rcs $@ $(OBJS)
@@ -27,10 +27,19 @@ $(LIB): $(OBJS)
 $(OBJ)/%.o: $(SRC)/%.c $(SRC)/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(OBJ):
+	mkdir -p $@
+
+$(LIBDIR):
+	mkdir -p $@
+
+$(BINDIR):
+	mkdir -p $@
+
 
 clean:
-	rm -rf $(OBJ)/*
-	rm -rf $(BINDIR)/*
+	rm -rf $(OBJ)
+	rm -rf $(BINDIR)
 
 clobber: clean
-	rm -rf $(LIBDIR)/*
+	rm -rf $(LIBDIR)
