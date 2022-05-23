@@ -1,6 +1,4 @@
-main
-main.*
-Makefile.test
-libprintf.*
-latex/
-*.o
+latex
+obj/*
+bin/*
+lib/*

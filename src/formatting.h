@@ -2,8 +2,7 @@
 #define BM_FORMATTING_H
 
 
-#include "bm_utils.h"
-#include "conversion.h"
+#include "print.h"
 
 
 #define FLAG_ALTF 0001 //alternate form

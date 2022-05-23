@@ -2,7 +2,8 @@
 #define BM_CONVERSION_H
 
 
-#include "bm_utils.h"
+#include "print.h"
+
 
 typedef union{
   float f;
@@ -19,7 +20,7 @@ typedef union{
   __uint128_t i;
 } longdblcst_t;
 
-typedef enum {BM_NUMBER = 0, BM_NAN = 1, BM_POS_INF = 2, BM_NEG_INF = 3} fpclass_t;
+typedef enum {BM_NUMBER, BM_NAN, BM_POS_INF, BM_NEG_INF} fpclass_t;
 
 
 fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x);

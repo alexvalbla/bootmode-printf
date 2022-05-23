@@ -1,25 +1,36 @@
-NAME = libprintf.a
-HEADER = libprintf.h
-files = conversion.c formatting.c print.c
-file_objects = $(files:.c=.o)
-release_flags = -Wall -Wextra -O3
+CC=gcc
+CFLAGS=-Wall
 
-all: $(NAME)
+SRC=src
+OBJ=obj
+SRCS=$(wildcard $(SRC)/*.c)
+OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 
-$(NAME): $(file_objects)
-	ar rcs $(NAME) $(file_objects)
-	cat print.h > $(HEADER)
+BINDIR=bin
+LIBDIR=lib
+LIBNAME=libbmprint
 
-%.o: %.c %.h
-	gcc $(release_flags) -c $<
+BIN=$(BINDIR)/main
+LIB=$(LIBDIR)/$(LIBNAME).a
+HEADER=$(LIBDIR)/$(LIBNAME).h
+
+all: $(LIB)
+
+release: CFLAGS=-Wall -O2 -DNDEBUG
+release: clean
+release: $(LIB)
+
+$(LIB): $(OBJS)
+	ar rcs $@ $(OBJS)
+	cp $(SRC)/print.h $(HEADER)
+
+$(OBJ)/%.o: $(SRC)/%.c $(SRC)/%.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 
 clean:
-	rm -f *.o
+	rm -rf $(OBJ)/*
+	rm -rf $(BINDIR)/*
 
-fclean:	clean
-	rm -f $(NAME)
-	rm -f $(HEADER)
-
-re:
-	make clean
-	make all
+clobber: clean
+	rm -rf $(LIBDIR)/*

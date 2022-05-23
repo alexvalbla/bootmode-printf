@@ -1,4 +1,3 @@
-#include "bm_utils.h"
 #include "formatting.h"
 
 
@@ -6,6 +5,18 @@
 #define DFLT_SIZE 1024
 #define MAX_PREC 300
 #define MAX_FIELD_WIDTH 512
+
+
+// typedef struct {
+//         void *output_ptr; // cast as either (char *) of (FILE *) for fputc
+//         char conv_buff[DFLT_SIZE];
+//         char pref_buff[16];
+//         char suff_buff[16];
+//         char padd_char; //either ' '(space) or '0'
+//         char *string_ptr; //when converting %s
+//         size_t n; //limit on the number of characters to be written
+//         uint16_t flags;
+// } bm_output_context;
 
 
 static inline void output_to_stdout(char *str){
