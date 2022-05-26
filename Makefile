@@ -1,31 +1,36 @@
 CC=gcc
-CFLAGS=-Wall
+# CFLAGS=-Wall
 
 SRC=src
+TEST=tests
 OBJ=obj
+BINDIR=bin
+
 SRCS=$(wildcard $(SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
+TESTS=$(wildcard $(TEST)/*.c)
+BINS=$(patsubst $(TEST)/%.c, $(BINDIR)/%, $(TESTS))
 
-BINDIR=bin
 LIBDIR=lib
-LIBNAME=libbmprint
+LIB_BASE_NAME=bmprint
+LIB=$(LIBDIR)/lib$(LIB_BASE_NAME).a
+HEADER=$(LIBDIR)/$(LIB_BASE_NAME).h
 
-BIN=$(BINDIR)/main
-LIB=$(LIBDIR)/$(LIBNAME).a
-HEADER=$(LIBDIR)/$(LIBNAME).h
-
-all: $(OBJ) $(LIBDIR) $(LIB)
+all: $(LIB)
 
 release: CFLAGS=-Wall -O2 -DNDEBUG
 release: clean
 release: all
 
-$(LIB): $(OBJS)
+$(LIB): $(OBJS) $(LIBDIR)
 	ar rcs $@ $(OBJS)
 	cp $(SRC)/print.h $(HEADER)
 
-$(OBJ)/%.o: $(SRC)/%.c $(SRC)/%.h
+$(OBJ)/%.o: $(SRC)/%.c $(SRC)/%.h $(OBJ)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BINDIR)/%: $(TEST)/%.c $(LIB) $(BINDIR)
+	$(CC) $(CFLAGS) -o $@ $< $(LIB)
 
 $(OBJ):
 	mkdir -p $@
@@ -36,6 +41,8 @@ $(LIBDIR):
 $(BINDIR):
 	mkdir -p $@
 
+test: $(BINS)
+	for b in ${BINS} ; do ./$${b} ; done
 
 clean:
 	rm -rf $(OBJ)
