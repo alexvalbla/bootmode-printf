@@ -20,28 +20,28 @@
 
 void output_d(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_u(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+void output_u(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_x(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+void output_x(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_o(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+void output_o(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_p(bm_va_list ap, char *str, uint16_t prec, uint8_t flags);
+void output_p(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_c(bm_va_list ap, char *str);
+void output_c(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_s(bm_va_list ap, char *str, uint16_t prec, uint8_t flags);
+void output_s(bm_output_ctxt *ctxt, bm_va_list ap);
 
-void output_n(bm_va_list ap, char mods[2], ssize_t total);
+void output_n(bm_output_ctxt *ctxt, bm_va_list ap);
 
-int output_e(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+// int output_e(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
-int output_f(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+// int output_f(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
-int output_g(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+// int output_g(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
 
 
-void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width);
+// void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width);
 
 
 #endif // formatting.h

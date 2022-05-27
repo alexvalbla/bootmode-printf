@@ -1,26 +1,20 @@
 #include "formatting.h"
 
 
-static inline void output_to_stdout(char *str){
-        //unlike puts(), does not append '\n' character
-        while(*str){
-                putchar(*(str++));
-        }
-}
 
-int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
+void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
         size_t i = 0; // used to keep track of where we are on the format string
 
-        //main loop
+        // main loop
         while(format[i] != '\0') {
-                if(format[i] != '%') {
+                if (format[i] != '%') {
                         // most common case: simply output the charater
                         output_char(ctxt, format[i++]);
-                }
-                else {
+                } else {
                         // this is where the fun begins...
 
                         // mark flags:
+                        ctxt->flags = 0;
                         begin_flag_loop:
                         ++i;
                         switch (format[i]) {
@@ -44,12 +38,12 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         }
 
                         // field width modifier:
-                        if(format[i] >= '1' && format[i] <= '9') {
+                        if (format[i] >= '1' && format[i] <= '9') {
                                 ctxt->flags |= FLAG_WDTH;
                                 uint16_t field_width = format[i++] - '0';
-                                while(format[i] >= '0' && format[i] <= '9') {
+                                while (format[i] >= '0' && format[i] <= '9') {
                                         field_width = field_width*10 + (format[i++]-'0');
-                                        if(field_width > MAX_FIELD_WIDTH) {
+                                        if (field_width > MAX_FIELD_WIDTH) {
                                                 // safeguard
                                                 field_width = MAX_FIELD_WIDTH;
                                         }
@@ -58,13 +52,13 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         }
 
                         // precision modifier:
-                        if(format[i] == '.'){
+                        if (format[i] == '.') {
                                 ctxt->flags |= FLAG_PREC;
                                 uint16_t precision = 0;
                                 ++i;
-                                while(format[i] >= '0' && format[i] <= '9'){
+                                while(format[i] >= '0' && format[i] <= '9') {
                                         precision = precision*10 + (format[i++]-'0');
-                                        if(precision > MAX_PREC){
+                                        if (precision > MAX_PREC) {
                                                 precision = MAX_PREC;
                                         }
                                 }
@@ -73,15 +67,15 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
 
                         // length modifiers:
                         int k = 0;
-                        while(format[i] == 'l' || format[i] == 'h' || format[i] == 'L' || format[i] == 'z'){
+                        while(format[i] == 'l' || format[i] == 'h' || format[i] == 'L' || format[i] == 'z') {
                                 // absorb all length modifiers
-                                if(k < 2){
+                                if (k < 2) {
                                         // normally, no more than 2 length modifiers,
                                         // in a correct format specification, i.e. lld, hhu...
                                         // if more appear, we only count the first 2:
                                         ctxt->lmods[k++] = format[i];
                                 }
-                                i++;
+                                ++i;
                         }
 
                         // argument conversion:
@@ -89,34 +83,36 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         // or undefined length modifiers for the conversion specifier, e.g. Ld, zf, etc...
                         // ...will be ignored
 
-                        switch(format[i]){
+                        char specifier = format[i++];
+                        switch(specifier) {
                                 case 'i':
                                 case 'd':
                                         output_d(ctxt, ap);
                                         break;
-                                //
-                                // case 'u':
-                                //         length = output_u(ap, mods, tmp, prec, flags);
-                                //         break;
-                                //
-                                // case 'X':
-                                //         flags |= FLAG_UCAS;
-                                //         // fall through
-                                // case 'x':
-                                //         length = output_x(ap, mods, tmp, prec, flags);
-                                //         break;
-                                //
-                                // case 'o':
-                                //         length = output_o(ap, mods, tmp, prec, flags);
-                                //         break;
-                                //
-                                // case 'p':
-                                //         length = output_p(ap, tmp, prec, flags);
-                                //         break;
-                                //
+
+                                case 'u':
+                                        output_u(ctxt, ap);
+                                        break;
+
+                                case 'X':
+                                        ctxt->flags |= FLAG_UCAS;
+                                        // fall through
+                                case 'x':
+                                        output_x(ctxt, ap);
+                                        break;
+
+                                case 'o':
+                                        // puts("here");
+                                        output_o(ctxt, ap);
+                                        break;
+
+                                case 'p':
+                                        output_p(ctxt, ap);
+                                        break;
+
                                 // case 'E':
                                 //         flags |= FLAG_UCAS;
-                                //         // fall thstrrough
+                                //         // fall through
                                 // case 'e':
                                 //         length = output_e(ap, mods, tmp, prec, flags);
                                 //         break;
@@ -134,35 +130,32 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                 // case 'g':
                                 //         length = output_g(ap, mods, tmp, prec, flags);
                                 //         break;
-                                //
-                                // case 'c':
-                                //         length = output_c(ap, tmp);
-                                //         break;
-                                //
-                                // case 's':
-                                //         length = output_s(ap, tmp, prec, flags);
-                                //         break;
-                                //
-                                // case 'n':
-                                //         output_n(ap, mods, total);
-                                //         i++;
-                                //         continue; // back to main loop -> while(format[i] != '\0') {...}
-                                //
-                                // case '%':
-                                //         total++;
-                                //         if(total < size){
-                                //                 str[str_idx++] = '%';
-                                //         }
-                                //         i++;
-                                //         continue; // back to main loop -> while(format[i] != '\0') {...}
+
+                                case 'c':
+                                        output_c(ctxt, ap);
+                                        break;
+
+                                case 's':
+                                        output_s(ctxt, ap);
+                                        break;
+
+                                case 'n':
+                                        output_n(ctxt, ap);
+                                        continue; // back to main loop -> while(format[i] != '\0') {...}
+
+                                case '%':
+                                        output_char(ctxt, '%');
+                                        continue; // back to main loop -> while(format[i] != '\0') {...}
 
                                 default:
-                                        return 1;
+                                        // bad specifier
+                                        output_char(ctxt, specifier);
+                                        break;
                                         // goto BAD_FORMAT;
                         }
 
         //
-        //                 if((flags&FLAG_WDTH) && length < field_width){
+        //                 if ((flags&FLAG_WDTH) && length < field_width) {
         //                         pad_conversion(format[i], tmp, flags, length, field_width);
         //                         length = field_width;
         //                 }
@@ -171,17 +164,17 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
         //                 //remember: need to reserve 1 byte for '\0' character
         //                 //total is the number of character needed so far
         //                 //BEFORE appending the new conversion
-        //                 if(total+1 < size){
+        //                 if (total+1 < size) {
         //                         size_t space_left = size-total-1;
-        //                         if(total+length < size){
+        //                         if (total+length < size) {
         //                                 //space to copy the whole conversion
-        //                                 for(size_t i = 0; i < length; i++){
+        //                                 for(size_t i = 0; i < length; i++) {
         //                                         str[str_idx++] = tmp[i];
         //                                 }
         //                         }
         //                         else{
         //                                 //copy strwhat you have space for
-        //                                 for(size_t i = 0; i < space_left; i++){
+        //                                 for(size_t i = 0; i < space_left; i++) {
         //                                         str[str_idx++] = tmp[i];
         //                                 }
         //                         }
@@ -191,9 +184,9 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
         //                 continue; //back to beginning of main 'while' loop
         //
         //                 BAD_FORMAT:
-        //                 if(format[i] != '\0'){
+        //                 if (format[i] != '\0') {
         //                         total++;
-        //                         if(total < size){
+        //                         if (total < size) {
         //                                 //room for (at least) one more character
         //                                 //before terminating null byte
         //                                 str[str_idx++] = format[i];
@@ -204,56 +197,42 @@ int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
         //                         str[str_idx] = '\0';
         //                         return (int)total;
         //                 }
-        //         } //end of 'if(format[i] == '%')'
-        //
-                }
-        } //end of main 'while' loop
+                } // end of 'if (format[i] == '%')'
+        } // end of main 'while' loop
 
-        // str[str_idx] = '\0';
-        // return (int)total;
-        return ctxt->total_needed;
-
-        //NOTES:
-        //writes at most size-1 bytes to str
-        //always appends a '\0' charater
-        //if total >= size, then not verything was written
-        //returns number of characters necessary...
-        //...if str had had sufficient memory
+        // printf("%zu\n", ctxt->total_written);
+        append_nul(ctxt);
+        // return ctxt->total_needed;
 }
+
+
+
+
+// printf-family functions
 
 int bootmode_vsnprintf(char *str, size_t size, const char *format, bm_va_list ap) {
-        return 1;
+        bm_output_ctxt ctxt;
+        initiate_ctxt(&ctxt, str);
+        set_character_limit(&ctxt, size);
+        main_output_loop(&ctxt, format, ap);
+        return ctxt.total_needed;
 }
 
-
-
-//derivatives
-
-int bootmode_vsprintf(char *str, const char *format, bm_va_list ap){
-        int res;
-        res = bootmode_vsnprintf(str, SIZE_MAX, format, ap);
-        return res;
+int bootmode_vsprintf(char *str, const char *format, bm_va_list ap) {
+        bm_output_ctxt ctxt;
+        initiate_ctxt(&ctxt, str);
+        main_output_loop(&ctxt, format, ap);
+        return ctxt.total_written;
 }
 
-int bootmode_vprintf(const char *format, bm_va_list ap){
-        char buff[DFLT_SIZE];
-        int res;
-        bm_va_list aq;
-        bm_va_copy(aq,ap);
-        res = bootmode_vsnprintf(buff, DFLT_SIZE, format, ap);
-        if(res >= DFLT_SIZE){
-                char *str = (char *)alloca((res+1)*sizeof(char));
-                bootmode_vsnprintf(str, res+1, format, aq);
-                output_to_stdout(str);
-        }
-        else{
-                output_to_stdout(buff);
-        }
-        bm_va_end(aq);
-        return res;
+int bootmode_vprintf(const char *format, bm_va_list ap) {
+        bm_output_ctxt ctxt;
+        initiate_ctxt(&ctxt, NULL);
+        main_output_loop(&ctxt, format, ap);
+        return ctxt.total_written;
 }
 
-int bootmode_snprintf(char *str, size_t size, const char *format, ...){
+int bootmode_snprintf(char *str, size_t size, const char *format, ...) {
         bm_va_list ap;
         bm_va_start(ap, format);
         int res = bootmode_vsnprintf(str, size, format, ap);
@@ -261,7 +240,7 @@ int bootmode_snprintf(char *str, size_t size, const char *format, ...){
         return res;
 }
 
-int bootmode_sprintf(char *str, const char *format, ...){
+int bootmode_sprintf(char *str, const char *format, ...) {
         bm_va_list ap;
         bm_va_start(ap, format);
         int res = bootmode_vsprintf(str, format, ap);
@@ -269,7 +248,7 @@ int bootmode_sprintf(char *str, const char *format, ...){
         return res;
 }
 
-int bootmode_printf(const char *format, ...){
+int bootmode_printf(const char *format, ...) {
         bm_va_list ap;
         bm_va_start(ap, format);
         int res = bootmode_vprintf(format, ap);

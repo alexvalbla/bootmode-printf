@@ -8,7 +8,7 @@
 
 int main (int argc, char **argv) {
 
-        printf("\n\ntest ran !!\n\n\n");
+        printf("[TEST] running header test\n");
 
         return 0;
 }

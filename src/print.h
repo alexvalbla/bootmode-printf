@@ -15,11 +15,6 @@
 #define bm_putchar putchar
 
 
-// defining bm_alloca:
-#include <alloca.h>
-#define bm_alloca alloca
-
-
 // defining bm_va_list functions
 #include <stdarg.h>
 #define bm_va_list va_list
