@@ -17,11 +17,11 @@ typedef struct {
         size_t limit_n; // limit on the number of characters to be written, e.g. in snprintf
         size_t total_needed; // to completely output what is specified in formatting string
         size_t total_written; // total number of characters written so far
+
         uint16_t flags;
         uint16_t field_width;
         uint16_t precision;
 
-        char conv_buff[CONV_SIZE];
         char lmods[3]; // length modifiers
         char specifier;
         // char padding_char; // either (space) or '0'
