@@ -345,7 +345,6 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                 output_char(ctxt, ' ');
         }
 
-
         char n_digits[20];
         if (n == 0) {
                 // floating point == 0.
@@ -371,7 +370,7 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         int F_digits = int_fmt_d(F_array, F_abs_val);
 
         // write decimal exponent
-        char e_adjust = (flags*FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
+        char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
         output_char(ctxt, 'e' + e_adjust);
         if (F < 0) {
                 output_char(ctxt, '-');
