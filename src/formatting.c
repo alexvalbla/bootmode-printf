@@ -86,7 +86,6 @@ void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
         int64_t a = (int64_t)extract_integer(ap, ctxt->lmods);
         uint16_t flags = ctxt->flags;
         uint16_t precision = ctxt->precision;
-        char *conv_buff = &(ctxt->conv_buff[0]);
 
         uint64_t b;
         if (a < 0) {
@@ -94,7 +93,9 @@ void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
         }
         else {
                 b = a;
+
         }
+        char conv_buff[32];
         int nb_digits = int_fmt_d(conv_buff, b); // reminder: if a == 0, nb_digits == 0
 
         if (!(flags&FLAG_PREC)) {
@@ -129,8 +130,8 @@ void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
         uint64_t a = (uint64_t)extract_integer(ap, ctxt->lmods);
         uint16_t flags = ctxt->flags;
         uint16_t precision = ctxt->precision;
-        char *conv_buff = &(ctxt->conv_buff[0]);
 
+        char conv_buff[32];
         int nb_digits = int_fmt_d(conv_buff, a); // reminder: if a == 0, nb_digits == 0
 
         if (!(flags&FLAG_PREC)) {
@@ -174,7 +175,7 @@ void output_x_inner(bm_output_ctxt *ctxt, uint64_t a) {
                 precision = 1;
         }
 
-        char *conv_buff = &(ctxt->conv_buff[0]);
+        char conv_buff[32];
         int buff_len = int_fmt_x(conv_buff, a, flags);
         if (buff_len == 0 && precision > 0) {
                 // precision > 0 but a == 0 -> print at least 1 digit
@@ -207,7 +208,7 @@ void output_o(bm_output_ctxt *ctxt, bm_va_list ap) {
                 precision = 1;
         }
 
-        char *conv_buff = &(ctxt->conv_buff[0]);
+        char conv_buff[32];
         int buff_len = int_fmt_o(conv_buff, a);
         if (buff_len == 0 && precision > 0) {
                 // precision > 0 but a == 0 -> print at least 1 digit
@@ -628,20 +629,29 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
 
 void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
         uint16_t flags = ctxt->flags;
-        if (class == BM_NAN) {
-                output_buffer(ctxt, "nan", 3);
-        } else if (class == BM_POS_INF) {
-                if (flags&FLAG_SIGN) {
-                        output_char(ctxt, '+');
-                } else if (flags&FLAG_WSPC) {
-                        output_char(ctxt, ' ');
+        char buff[3] = {'n', 'a', 'n'};
+        if (class != BM_NAN) {
+                buff[0] = 'i';
+                buff[1] = 'n';
+                buff[2] = 'f';
+                if (class == BM_POS_INF) {
+                        if (flags&FLAG_SIGN) {
+                                output_char(ctxt, '+');
+                        } else if (flags&FLAG_WSPC) {
+                                output_char(ctxt, ' ');
+                        }
+                } else {
+                        // class == BM_NEG_INF
+                        output_char(ctxt, '-');
                 }
-                output_buffer(ctxt, "inf", 3);
         }
-        else {
-                //BM_NEG_INF
-                output_buffer(ctxt, "-inf", 4);
+        if (ctxt->flags&FLAG_UCAS) {
+                char maj = 'A' - 'a'; // upper case adjustement
+                buff[0] += maj;
+                buff[1] += maj;
+                buff[2] += maj;
         }
+        output_buffer(ctxt, buff, 3);
 }
 
 
