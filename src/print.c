@@ -83,8 +83,8 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         // or undefined length modifiers for the conversion specifier, e.g. Ld, zf, etc...
                         // ...will be ignored
 
-                        char specifier = format[i++];
-                        switch(specifier) {
+                        ctxt->specifier = format[i++];
+                        switch(ctxt->specifier) {
                                 case 'i':
                                 case 'd':
                                         output_d(ctxt, ap);
@@ -102,7 +102,6 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                         break;
 
                                 case 'o':
-                                        // puts("here");
                                         output_o(ctxt, ap);
                                         break;
 
@@ -110,13 +109,18 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                         output_p(ctxt, ap);
                                         break;
 
-                                // case 'E':
-                                //         flags |= FLAG_UCAS;
-                                //         // fall through
-                                // case 'e':
-                                //         length = output_e(ap, mods, tmp, prec, flags);
-                                //         break;
-                                //
+                                case 'E':
+                                case 'F':
+                                case 'G':
+                                        ctxt->flags |= FLAG_UCAS;
+                                        ctxt->specifier -= 'A' - 'a'; // set specifier to lower case
+                                        // fall through
+                                case 'e':
+                                case 'f':
+                                case 'g':
+                                        output_fp(ctxt, ap);
+                                        break;
+
                                 // case 'F':
                                 //         flags |= FLAG_UCAS;
                                 //         // fall through
@@ -149,7 +153,7 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
 
                                 default:
                                         // bad specifier
-                                        output_char(ctxt, specifier);
+                                        output_char(ctxt, ctxt->specifier);
                                         break;
                                         // goto BAD_FORMAT;
                         }

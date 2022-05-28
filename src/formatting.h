@@ -34,11 +34,7 @@ void output_s(bm_output_ctxt *ctxt, bm_va_list ap);
 
 void output_n(bm_output_ctxt *ctxt, bm_va_list ap);
 
-// int output_e(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
-
-// int output_f(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
-
-// int output_g(bm_va_list ap, char mods[2], char *str, uint16_t prec, uint8_t flags);
+void output_fp(bm_output_ctxt *ctxt, bm_va_list ap);
 
 
 // void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width);

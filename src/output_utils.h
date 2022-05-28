@@ -23,7 +23,8 @@ typedef struct {
 
         char conv_buff[CONV_SIZE];
         char lmods[3]; // length modifiers
-        char padding_char; // either (space) or '0'
+        char specifier;
+        // char padding_char; // either (space) or '0'
 } bm_output_ctxt;
 
 
