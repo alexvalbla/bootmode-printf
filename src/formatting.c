@@ -288,7 +288,7 @@ void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {
 //floating point formatting functions
 
 static void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
-// static void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
+static void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
 // static void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
 void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class);
 
@@ -310,23 +310,26 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
                 decimalConversion(&F, &n, E, m);
                 switch (ctxt->specifier) {
                         case 'e':
-                        case 'f':
-                        case 'g':
                                 fp_fmt_e(ctxt, s, n, F);
+                                break;
+                        case 'f':
+                                fp_fmt_f(ctxt, s, n, F);
+                                break;
+                        case 'g':
                                 break;
                         default:
                                 break;
                 }
         } else {
-                //otherwise: +inf, -inf or nan
+                // otherwise: +inf, -inf or nan
                 fp_special_case(ctxt, class);
         }
 }
 
 void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
-        // adjust precision
         uint16_t precision = ctxt->precision;
         uint16_t flags = ctxt->flags;
+        // adjust precision
         if (flags&FLAG_PREC) {
                 if (precision > 18) {
                         precision = 18;
@@ -345,24 +348,24 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                 output_char(ctxt, ' ');
         }
 
-        char n_digits[20];
+        char n_array[20];
         if (n == 0) {
                 // floating point == 0.
-                for (int i = 0; i < 19; i++) {
-                        n_digits[i] = '0';
+                for (int i = 0; i < 19; ++i) {
+                        n_array[i] = '0';
                 }
         } else {
                 // write decimal mantissa
                 // n has 19 digits (10^18 <= n < 10^19)
                 // we want 1 digit before the decimal point
                 // so we increase the decimal exponent by 18
-                int_fmt_d(n_digits, n);
+                int_fmt_d(n_array, n);
                 F += 18;
         }
-        output_char(ctxt, n_digits[0]);
+        output_char(ctxt, n_array[0]);
         if (precision || (flags&FLAG_ALTF)) {
                 output_char(ctxt, '.');
-                output_buffer(ctxt, n_digits+1, precision);
+                output_buffer(ctxt, n_array+1, precision);
         }
 
         int32_t F_abs_val = (F < 0) ? -F : F;
@@ -391,112 +394,72 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         }
 }
 
-// int fp_fmt_f(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags) {
-//         //adjust precision
-//         if (flags&FLAG_PREC) {
-//                 if (prec > 19) {
-//                         prec = 19;
-//                 }
-//         }
-//         else {
-//                 //no precision specified, taken as 6
-//                 prec = 6;
-//         }
-//
-//         //write sign
-//         int i = 0;
-//         if (s) {
-//                 str[i++] = '-';
-//         }
-//         else if (flags&FLAG_SIGN) {
-//                 str[i++] = '+';
-//         }
-//         else if (flags&FLAG_WSPC) {
-//                 str[i++] = ' ';
-//         }
-//
-//         if (n == 0) {
-//                 //f == 0.
-//                 str[i++] = '0';
-//                 if (prec) {
-//                         str[i++] = '.';
-//                         for(int j = 0; j < prec; j++) {
-//                                 str[i++] = '0';
-//                         }
-//                 }
-//                 str[i] = '\0';
-//                 return i;
-//         }
-//
-//         int l = 20;
-//         char d[l]; //to write decimal mantissa
-//         //n has 19 digits
-//         int_fmt_u(n,d,0,0);
-//
-//         //write decimal mantissa
-//         int digits = 19+F; //digits before decimal point
-//         int j = 0; //used to index decimal mantissa
-//         if (digits >= 19) {
-//                 //write the whole mantissa
-//                 //then add zeros until decimal point
-//                 //add prec zeros after decimal point
-//                 for(j = 0; j < 19; j++) {
-//                         str[i++] = d[j];
-//                 }
-//                 while (j < digits) {
-//                         str[i++] = '0';
-//                         j++;
-//                 }
-//                 if (prec || (flags&FLAG_ALTF)) {
-//                         str[i++] = '.';
-//                         for(int k = 0; k < prec; k++) {
-//                                 str[i++] = '0';
-//                         }
-//                 }
-//         }
-//         else if (digits > 0) {
-//                 //write part of the decimal mantissa before decimal point
-//                 //then maybe write the rest afterwards, depending on prec
-//                 //complete with zeros if not enough digits for prec
-//                 for(j = 0; j < digits; j++) {
-//                         str[i++] = d[j];
-//                 }
-//                 if (prec || (flags&FLAG_ALTF)) {
-//                         str[i++] = '.';
-//                         int decimals = 19-j; //digits on decimal mantissa...
-//                         //...that we haven't consumed yet
-//                         for(int k = 0; k < prec; k++) {
-//                                 if (k < decimals) {
-//                                         str[i++] = d[j++];
-//                                 }
-//                                 else {
-//                                         str[i++] = '0';
-//                                 }
-//                         }
-//                 }
-//         }
-//         else {
-//                 //0.0...0dddd
-//                 //the decimal mantissa starts
-//                 //after the decimal point
-//                 str[i++] = '0';
-//                 if (prec || (flags&FLAG_ALTF)) {
-//                         str[i++] = '.';
-//                         digits = -digits;
-//                         for(int k = 0, j = 0; k < prec; k++) {
-//                                 if (k < digits) {
-//                                         str[i++] = '0';
-//                                 }
-//                                 else {
-//                                         str[i++] = d[j++];
-//                                 }
-//                         }
-//                 }
-//         }
-//         str[i] = '\0';
-//         return i;
-// }
-//
+void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
+        uint16_t precision = ctxt->precision;
+        uint16_t flags = ctxt->flags;
+        // adjust precision
+        if (flags&FLAG_PREC) {
+                if (precision > 19) {
+                        precision = 19;
+                }
+        } else {
+                //no precision specified, taken as 6
+                precision = 6;
+        }
+
+        // sign
+        if (s) {
+                output_char(ctxt, '-');
+        } else if (flags&FLAG_SIGN) {
+                output_char(ctxt, '+');
+        } else if (flags&FLAG_WSPC) {
+                output_char(ctxt, ' ');
+        }
+
+        int digits_before_point; // decimal point
+        char n_array[20];
+        if (n == 0) {
+                // floating point == 0.
+                digits_before_point = 0;
+                for (int i = 0; i < 19; ++i) {
+                        n_array[i] = '0';
+                }
+        } else {
+                digits_before_point = 19+F; // n has 19 decimals
+                int_fmt_d(n_array, n);
+        }
+
+        if (digits_before_point >= 19) {
+                output_buffer(ctxt, n_array, 19);
+                output_char_loop(ctxt, '0', digits_before_point-19);
+                if (precision > 0 || flags&FLAG_ALTF) {
+                        output_char(ctxt, '.');
+                        output_char_loop(ctxt, '0', precision);
+                }
+        } else if (digits_before_point > 0) {
+                output_buffer(ctxt, n_array, digits_before_point);
+                if (precision > 0 || flags&FLAG_ALTF) {
+                        output_char(ctxt, '.');
+                        int digits_left = 19-digits_before_point;
+                        if (digits_left >= precision) {
+                                output_buffer(ctxt, n_array+digits_before_point, precision);
+                        } else {
+                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
+                                output_char_loop(ctxt, '0', precision-digits_left);
+                        }
+                }
+        } else {
+                if (precision > 0 || flags&FLAG_ALTF) {
+                        output_char(ctxt, '0');
+                        output_char(ctxt, '.');
+                }
+                // remember that digits_before_point <= 0
+                output_char_loop(ctxt, '0', (size_t)(-digits_before_point));
+                precision += digits_before_point;
+                output_buffer(ctxt, n_array, precision);
+        }
+}
+
 // int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags) {
 //         //adjust precision
 //         if (flags&FLAG_PREC) {
