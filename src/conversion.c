@@ -297,9 +297,16 @@ static inline void adjust_n_and_F(uint64_t *n, int32_t *F){
         }
 }
 
-void decimalConversion(int32_t *F, uint64_t *n, int32_t E, uint64_t m){
-        adjust_m(&E, &m);
-        *F = decimalExponent(E);
-        *n = decimalMantissa(*F, m, E);
-        adjust_n_and_F(n, F);
+void decimalConversion(int32_t *F, uint64_t *n, int32_t E, uint64_t m) {
+        // supposes the floating point is of type BM_NUMBER
+        if (m != 0) {
+                adjust_m(&E, &m);
+                *F = decimalExponent(E);
+                *n = decimalMantissa(*F, m, E);
+                adjust_n_and_F(n, F);
+        } else {
+                // m == 0 indicates that the number is zero
+                *n = 0;
+                *F = 0;
+        }
 }
