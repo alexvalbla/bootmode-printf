@@ -121,20 +121,6 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                         output_fp(ctxt, ap);
                                         break;
 
-                                // case 'F':
-                                //         flags |= FLAG_UCAS;
-                                //         // fall through
-                                // case 'f':
-                                //         length = output_f(ap, mods, tmp, prec, flags);
-                                //         break;
-                                //
-                                // case 'G':
-                                //         flags |= FLAG_UCAS;
-                                //         // fall through
-                                // case 'g':
-                                //         length = output_g(ap, mods, tmp, prec, flags);
-                                //         break;
-
                                 case 'c':
                                         output_c(ctxt, ap);
                                         break;

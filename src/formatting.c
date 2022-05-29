@@ -289,7 +289,7 @@ void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {
 
 static void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
 static void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
-// static void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
+static void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
 void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class);
 
 
@@ -316,6 +316,7 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
                                 fp_fmt_f(ctxt, s, n, F);
                                 break;
                         case 'g':
+                                fp_fmt_g(ctxt, s, n, F);
                                 break;
                         default:
                                 break;
@@ -403,7 +404,7 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                         precision = 19;
                 }
         } else {
-                //no precision specified, taken as 6
+                // no precision specified, taken as 6
                 precision = 6;
         }
 
@@ -420,12 +421,16 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         char n_array[20];
         if (n == 0) {
                 // floating point == 0.
-                digits_before_point = 0;
-                for (int i = 0; i < 19; ++i) {
-                        n_array[i] = '0';
+                output_char(ctxt, '0');
+                if (precision > 0) {
+                        output_char(ctxt, '.');
+                        output_char_loop(ctxt, '0', precision);
+                } else if (flags&(FLAG_ALTF)) {
+                        output_char(ctxt, '.');
                 }
+                return;
         } else {
-                digits_before_point = 19+F; // n has 19 decimals
+                digits_before_point = F+19; // n has 19 decimals
                 int_fmt_d(n_array, n);
         }
 
@@ -449,145 +454,152 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                         }
                 }
         } else {
-                if (precision > 0 || flags&FLAG_ALTF) {
-                        output_char(ctxt, '0');
+                output_char(ctxt, '0');
+                if (precision > 0) {
+                        // puts("here");
+                        output_char(ctxt, '.');
+                        // remember that digits_before_point <= 0
+                        int zeros_after_point = -digits_before_point;
+                        if (zeros_after_point >= precision) {
+                                output_char_loop(ctxt, '0', precision);
+                        } else {
+                                output_char_loop(ctxt, '0', zeros_after_point);
+                                output_buffer(ctxt, n_array, precision-zeros_after_point);
+                        }
+                } else if (flags&FLAG_ALTF) {
                         output_char(ctxt, '.');
                 }
-                // remember that digits_before_point <= 0
-                output_char_loop(ctxt, '0', (size_t)(-digits_before_point));
-                precision += digits_before_point;
-                output_buffer(ctxt, n_array, precision);
         }
 }
 
-// int fp_fmt_g(char *str, char s, uint64_t n, int32_t F, uint16_t prec, uint8_t flags) {
-//         //adjust precision
-//         if (flags&FLAG_PREC) {
-//                 if (prec > 19) {
-//                         prec = 19;
-//                 }
-//                 else if (prec == 0) {
-//                         prec = 1;
-//                 }
-//         }
-//         else {
-//                 //no precision specified, taken as 6
-//                 prec = 6;
-//         }
-//
-//         //write sign
-//         int i = 0;
-//         if (s) {
-//                 str[i++] = '-';
-//         }
-//         else if (flags&FLAG_SIGN) {
-//                 str[i++] = '+';
-//         }
-//         else if (flags&FLAG_WSPC) {
-//                 str[i++] = ' ';
-//         }
-//
-//         if (n == 0) {
-//                 //f == 0.
-//                 str[i++] = '0';
-//                 if (flags&FLAG_ALTF) {
-//                         str[i++] = '.';
-//                         for(int k = 1; k < prec; k++) {
-//                                 str[i++] = '0';
-//                         }
-//                 }
-//                 str[i] = '\0';
-//                 return i;
-//         }
-//         int l = 20;
-//         char d[l]; //to write decimal mantissa
-//         char e[l]; //to write decimal exponent
-//         //n has 19 digits
-//         int_fmt_u(n,d,0,0);
-//
-//         //if written in 'e'-format, the exponent would be F+18
-//         if (F+18 >= (int)prec || F+18 < -4) {
-//                 //'e'-format conversion
-//                 F += 18;
-//                 int_fmt_d(F,e,0,0);
-//                 str[i++] = d[0];
-//                 if (prec > 1 || (flags&FLAG_ALTF)) {
-//                         str[i++] = '.';
-//                         for(int j = 1; j < prec; j++) {
-//                                 str[i++] = d[j];
-//                         }
-//                         if (!(flags&FLAG_ALTF)) {
-//                                 //remove trailing zeros
-//                                 //and decimal point if no decimals follow it
-//                                 while (str[i-1] == '0') {
-//                                         i--;
-//                                 }
-//                                 if (str[i-1] == '.') {
-//                                         i--;
-//                                 }
-//                         }
-//                 }
-//                 int k = 0;
-//                 str[i++] = 'e';
-//                 if (e[k] == '-') {
-//                         str[i++] = e[k++];
-//                 }
-//                 else {
-//                         str[i++] = '+';
-//                 }
-//                 if (e[k] == '0') {
-//                         //exponent is zero, has to be written as 00
-//                         str[i++] = '0';
-//                         str[i++] = '0';
-//                 }
-//                 else {
-//                         if (F > -10 && F < 10) {
-//                                 str[i++] = '0';
-//                         }
-//                         while (e[k]) {
-//                                 str[i++] = e[k++];
-//                         }
-//                 }
-//                 str[i] = '\0';
-//                 return i;
-//         }
-//
-//         //'f'-format conversion
-//         int digits = 19+F; //digits before the decimal point
-//         int j = 0; //where we are on our decimal mantissa
-//         if (digits <= 0) {
-//                 //0.0... ddd
-//                 str[i++] = '0';
-//         }
-//         else {
-//                 for(int k = 0; k < digits; k++) {
-//                         str[i++] = d[j++];
-//                 }
-//         }
-//         if (j < prec || (flags&FLAG_ALTF)) {
-//                 str[i++] = '.';
-//                 while (digits < 0) {
-//                         str[i++] = '0';
-//                         digits++;
-//                 }
-//                 while (j < prec) {
-//                         str[i++] = d[j++];
-//                 }
-//                 //remove trailing zeros
-//                 if (!(flags&FLAG_ALTF)) {
-//                         //remove trailing zeros
-//                         //and decimal point if no decimals follow it
-//                         while (str[i-1] == '0') {
-//                                 i--;
-//                         }
-//                         if (str[i-1] == '.') {
-//                                 i--;
-//                         }
-//                 }
-//         }
-//         str[i] = '\0';
-//         return i;
-// }
+void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
+        int32_t sig_digits = ctxt->precision;
+        uint16_t flags = ctxt->flags;
+        if (flags&FLAG_PREC) {
+                if (sig_digits > 19) {
+                        sig_digits = 19;
+                } else if (sig_digits == 0) {
+                        // always at least 1
+                        sig_digits = 1;
+                }
+        } else {
+                // no precision specified, taken as 6
+                sig_digits = 6;
+        }
+
+        // sign
+        if (s) {
+                output_char(ctxt, '-');
+        } else if (flags&FLAG_SIGN) {
+                output_char(ctxt, '+');
+        } else if (flags&FLAG_WSPC) {
+                output_char(ctxt, ' ');
+        }
+
+        char n_array[20];
+        int nb_digits = int_fmt_d(n_array, n);
+        if (nb_digits == 0) {
+                // floating point is zero
+                output_char(ctxt, '0');
+                --sig_digits;
+                if (flags&(FLAG_ALTF)) {
+                        output_char(ctxt, '.');
+                        output_char_loop(ctxt, '0', sig_digits);
+                }
+                return;
+        }
+
+        int32_t exp_e = F+18;
+        if (exp_e < -4 || exp_e >= sig_digits) {
+                // %e-style conversion
+                output_char(ctxt, n_array[0]);
+                --sig_digits;
+                int cur = sig_digits;
+                if (!(flags&FLAG_ALTF)) {
+                        // remove trailing zeros
+                        while (n_array[cur] == '0') --cur;
+                        if (cur > 0) {
+                                output_char(ctxt, '.');
+                        }
+                } else {
+                        output_char(ctxt, '.');
+                }
+                output_buffer(ctxt, n_array+1, cur);
+
+                // write decimal exponent
+                int32_t e_abs = (exp_e < 0) ? -exp_e : exp_e;
+                char e_array[10];
+                int e_digits = int_fmt_d(e_array, e_abs);
+                char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
+                output_char(ctxt, 'e' + e_adjust);
+                if (exp_e < 0) {
+                        output_char(ctxt, '-');
+                } else {
+                        output_char(ctxt, '+');
+                }
+                if (e_digits < 2) {
+                        // write with at least 2 digits
+                        output_char(ctxt, '0');
+                        if (e_digits == 1) {
+                                output_char(ctxt, e_array[0]);
+                        } else {
+                                // in other words, F == 0
+                                output_char(ctxt, '0');
+                        }
+                } else {
+                        output_buffer(ctxt, e_array, e_digits);
+                }
+                return;
+        }
+
+        // %f-style conversion
+        int digits_before_point = F+19; // digits before the decimal point
+        if (digits_before_point >= 19) {
+                output_buffer(ctxt, n_array, 19);
+                output_char_loop(ctxt, '0', digits_before_point-19);
+                if (flags&FLAG_ALTF) {
+                        output_char(ctxt, '.');
+                }
+        } else if (digits_before_point > 0) {
+                int digits_left = nb_digits-digits_before_point;
+                sig_digits -= digits_before_point;
+                output_buffer(ctxt, n_array, digits_before_point);
+                if (flags&FLAG_ALTF) {
+                        output_char(ctxt, '.');
+                        if (sig_digits <= 0) {
+                                return; // already printed enough significant digits
+                        }
+                        if (digits_left >= sig_digits) {
+                                output_buffer(ctxt, n_array+digits_before_point, sig_digits);
+                        } else {
+                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
+                                output_char_loop(ctxt, '0', sig_digits-digits_left);
+                        }
+                } else {
+                        if (sig_digits <= 0) {
+                                return; // already printed enough significant digits
+                        }
+                        // remove trailing zeros
+                        int cur = nb_digits-1;
+                        while (n_array[cur] == '0' && cur-- >= digits_before_point) {
+                                --digits_left;
+                        }
+                        if (digits_left > 0) {
+                                output_char(ctxt, '.');
+                        }
+                        if (digits_left >= sig_digits) {
+                                output_buffer(ctxt, n_array+digits_before_point, sig_digits);
+                        } else {
+                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
+                        }
+                }
+        } else {
+                output_char(ctxt, '0');
+                output_char(ctxt, '.');
+                output_char_loop(ctxt, '0', (size_t)(-digits_before_point));
+                output_buffer(ctxt, n_array, sig_digits);
+        }
+}
 
 void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
         uint16_t flags = ctxt->flags;
@@ -615,115 +627,3 @@ void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
         }
         output_buffer(ctxt, buff, 3);
 }
-
-
-
-
-// //for padding after conversions
-//
-// void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width) {
-//         //str contains the argument conversion
-//         //supposes that field_width > length
-//         int l = field_width-length;
-//         int integer = 0;
-//         char c = ' ';
-//         if (!(flags&FLAG_LADJ) && flags&FLAG_ZERO) {
-//                 c = '0';
-//         }
-//         switch (fmt) {
-//                 //integer conversions
-//                 case 'i':
-//                 case 'd':
-//                 case 'u':
-//                 case 'X':
-//                 case 'x':
-//                 case 'o':
-//                 case 'p':
-//                 if (flags&FLAG_PREC) {
-//                         //precision was given, ignore 0 flag
-//                         c = ' ';
-//                 }
-//                 integer = 1;
-//                 // fall through
-//
-//                 case 'E':
-//                 case 'e':
-//                 case 'F':
-//                 case 'f':
-//                 case 'G':
-//                 case 'g':
-//                 if (flags&FLAG_LADJ) {
-//                         //pad with whitespace on the right (left adjusted)
-//                         pad_str(&str[length], l, c);
-//                 }
-//                 else {
-//                         if (c == '0' && integer) {
-//                                 //pad with zeros on the left (right adjusted)
-//                                 if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
-//                                         //0x... or 0X...
-//                                         //padding will be 0x0000000...
-//                                         //rather than     00000000x...
-//                                         shift_str(&str[2], l, length-2);
-//                                         pad_str(&str[2], l, '0');
-//                                 }
-//                                 else if (str[0] == ' ' || str[0] == '-' || str[0] == '+') {
-//                                         //sign comes before the zeros
-//                                         shift_str(&str[1], l, length-1);
-//                                         pad_str(&str[1], l, '0');
-//                                 }
-//                                 else {
-//                                         shift_str(str, l, length);
-//                                         pad_str(str, l, '0');
-//                                 }
-//                         }
-//                         else if (c == '0' && !integer) {
-//                                 //floating point padded with zeros
-//                                 if (str[0] == 'n' || str[0] == 'i') {
-//                                         //"nan" of "inf"
-//                                         //pad with whitespace, not zeros
-//                                         shift_str(str, l, length);
-//                                         pad_str(str, l, ' ');
-//                                 }
-//                                 else if (str[0] == ' ' || str[0] == '-' || str[0] == '+') {
-//                                         if (str[1] == 'i') {
-//                                                 //" inf" "-inf" or "+inf"
-//                                                 //pad with whitespace, not zeros
-//                                                 //and pad on the left
-//                                                 shift_str(&str[0], l, length);
-//                                                 pad_str(&str[0], l, ' ');
-//                                         }
-//                                         else {
-//                                                 shift_str(&str[1], l, length);
-//                                                 pad_str(&str[1], l, '0');
-//                                         }
-//                                 }
-//                                 else {
-//                                         shift_str(str, l, length);
-//                                         pad_str(str, l, '0');
-//                                 }
-//                         }
-//                         else {
-//                                 //integer or floating point, c == ' '
-//                                 //pad with whitespace on the left (right adjusted)
-//                                 shift_str(str, l, length);
-//                                 pad_str(str, l, ' ');
-//                         }
-//                 }
-//                 break;
-//
-//                 case 'c':
-//                 case 's':
-//                 if (flags&FLAG_LADJ) {
-//                         pad_str(&str[length], l, c);
-//                 }
-//                 else {
-//                         shift_str(str, l, length);
-//                         pad_str(str, l, c);
-//                 }
-//                 break;
-//
-//                 default:
-//                 break;
-//         }
-//         str[field_width] = '\0';
-// }
