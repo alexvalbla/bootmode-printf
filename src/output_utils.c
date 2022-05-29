@@ -83,10 +83,14 @@ void append_nul(bm_output_ctxt *ctxt) {
                 if (!(ctxt->flags&FLAG_LIMIT)) {
                         // append if there is no limit
                         ctxt->output_str[ctxt->total_written] = '\0';
-                } else if (ctxt->total_written < ctxt->limit_n) {
-                        // append if limit not yet attained
-                        // snprintf or vsnprintf
-                        ctxt->output_str[ctxt->total_written] = '\0';
-                }
+                } else if (ctxt->limit_n > 0) {
+                        if (ctxt->total_written < ctxt->limit_n) {
+                                // there is still roon for terminating '\0'
+                                ctxt->output_str[ctxt->total_written] = '\0';
+                        } else {
+                                // overwrite last written character
+                                ctxt->output_str[ctxt->total_written-1] = '\0';
+                        }
+                } // else: limit_n == 0, nothing can be written
         }
 }
