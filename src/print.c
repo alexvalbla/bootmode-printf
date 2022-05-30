@@ -12,9 +12,9 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         output_char(ctxt, format[i++]);
                 } else {
                         // this is where the fun begins...
+                        REMOVE_FORMATTING_FLAGS(ctxt->flags); // clean slate
 
                         // mark flags:
-                        ctxt->flags = 0;
                         begin_flag_loop:
                         ++i;
                         switch (format[i]) {

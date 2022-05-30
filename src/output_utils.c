@@ -10,6 +10,7 @@ void initiate_ctxt(bm_output_ctxt *ctxt, char *output_str) {
         ctxt->output_str = output_str; // if NULL -> outputting to stdout
         ctxt->total_needed = 0;
         ctxt->total_written = 0;
+        ctxt->flags = 0;
         ctxt->lmods[0] = '\0';
         ctxt->lmods[1] = '\0';
         ctxt->lmods[2] = '\0';
@@ -25,10 +26,11 @@ void output_char(bm_output_ctxt *ctxt, char c) {
                 // outputting to string
                 if (!(ctxt->flags&FLAG_LIMIT) || ctxt->total_written < ctxt->limit_n) {
                         ctxt->output_str[ctxt->total_written] = c;
+                        ++(ctxt->total_written);
                 }
-                ++(ctxt->total_written);
         } else {
                 // outputting to stdout
+                ++(ctxt->total_written);
                 bm_putchar(c);
         }
         ++(ctxt->total_needed);
