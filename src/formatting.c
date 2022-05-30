@@ -112,11 +112,17 @@ void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
 
         uint64_t b;
         if (a < 0) {
-                b = -a;
-        }
-        else {
+                b = *((uint64_t *)&a); // bitwise copy
+                // 0x8000000000000000 == +2^(63) as unsigned integer
+                // 0x8000000000000000 == -2^(63) as signed integer
+                if (b != 0x8000000000000000) {
+                        b = -a;
+                }
+                // else a == -2^63, and we already have b == -a
+                // but since 64-bit signed integers cannot hold 2^(63)
+                // doing "b = -a;" might be undefined
+        } else {
                 b = a;
-
         }
         char conv_buff[32];
         int nb_digits = int_fmt_d(conv_buff, b); // reminder: if a == 0, nb_digits == 0
