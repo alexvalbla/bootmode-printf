@@ -6,10 +6,8 @@
 
 
 // adjustable if needed
-#define DFLT_SIZE 1024
 #define MAX_PREC 500
 #define MAX_FIELD_WIDTH 500
-#define CONV_SIZE 32
 
 
 typedef struct {
