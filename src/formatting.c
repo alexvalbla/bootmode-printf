@@ -16,8 +16,31 @@ static void str_rev(char *s, size_t size) {
         }
 }
 
-static unsigned long long extract_integer(bm_va_list ap, char *lmods) {
+static unsigned long long extract_unsigned_integer(bm_va_list ap, char *lmods) {
         unsigned long long a;
+        if (lmods[0] == 'l' && lmods[1] == '\0') {
+                a = bm_va_arg(ap, unsigned long);
+        }
+        else if (lmods[0] == 'l' && lmods[1] == 'l') {
+                a = bm_va_arg(ap, unsigned long long);
+        }
+        else if (lmods[0] == 'h' && lmods[1] == '\0') {
+                a = bm_va_arg(ap, unsigned int);
+        }
+        else if (lmods[0] == 'h' && lmods[1] == 'h') {
+                a = bm_va_arg(ap, unsigned int);
+        }
+        else if (lmods[0] == 'z' && lmods[1] == '\0') {
+                a = bm_va_arg(ap, size_t);
+        }
+        else {
+                a = bm_va_arg(ap, unsigned int);
+        }
+        return a;
+}
+
+static long long extract_integer(bm_va_list ap, char *lmods) {
+        long long a;
         if (lmods[0] == 'l' && lmods[1] == '\0') {
                 a = bm_va_arg(ap, long);
         }
@@ -31,7 +54,7 @@ static unsigned long long extract_integer(bm_va_list ap, char *lmods) {
                 a = bm_va_arg(ap, int);
         }
         else if (lmods[0] == 'z' && lmods[1] == '\0') {
-                a = bm_va_arg(ap, size_t);
+                a = bm_va_arg(ap, ssize_t);
         }
         else {
                 a = bm_va_arg(ap, int);
@@ -83,7 +106,7 @@ static int int_fmt_o(char *conv_buff, uint64_t a) {
 }
 
 void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
-        int64_t a = (int64_t)extract_integer(ap, ctxt->lmods);
+        int64_t a = extract_integer(ap, ctxt->lmods);
         uint16_t flags = ctxt->flags;
         uint16_t precision = ctxt->precision;
 
@@ -127,7 +150,7 @@ void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
 }
 
 void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = (uint64_t)extract_integer(ap, ctxt->lmods);
+        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
         uint16_t flags = ctxt->flags;
         uint16_t precision = ctxt->precision;
 
@@ -163,7 +186,7 @@ void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
 void output_x_inner(bm_output_ctxt *ctxt, uint64_t a);
 
 void output_x(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = (uint64_t)extract_integer(ap, ctxt->lmods);
+        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
         output_x_inner(ctxt, a);
 }
 
@@ -201,7 +224,7 @@ void output_x_inner(bm_output_ctxt *ctxt, uint64_t a) {
 }
 
 void output_o(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = (uint64_t)extract_integer(ap, ctxt->lmods);
+        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
         uint16_t flags = ctxt->flags;
         uint16_t precision = ctxt->precision;
         if (!(flags&FLAG_PREC)) {
@@ -456,7 +479,6 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         } else {
                 output_char(ctxt, '0');
                 if (precision > 0) {
-                        // puts("here");
                         output_char(ctxt, '.');
                         // remember that digits_before_point <= 0
                         int zeros_after_point = -digits_before_point;
