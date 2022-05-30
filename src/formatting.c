@@ -279,7 +279,9 @@ void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
                 len = 6;
         } else {
                 const char *cursor = s;
-                while (*(cursor++)) {}
+                while (*cursor) {
+                        ++cursor;
+                }
                 len = cursor-s;
         }
         output_buffer(ctxt, s, len);
