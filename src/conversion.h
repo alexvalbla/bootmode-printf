@@ -6,11 +6,6 @@
 
 
 typedef union{
-  float f;
-  uint32_t i;
-} fltcst_t;
-
-typedef union{
   double f;
   uint64_t i;
 } dblcst_t;
