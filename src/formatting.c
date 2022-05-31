@@ -173,15 +173,6 @@ void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
                 nb_digits = 1;
         }
 
-        int total_length = nb_digits + 1; // provisional +1 for sign character
-        if (flags&FLAG_SIGN) {
-                output_char(ctxt, '+');
-        } else if (flags&FLAG_WSPC) {
-                output_char(ctxt, ' ');
-        } else {
-                --total_length; // remove provisional +1
-        }
-
         int prec_padding = precision - nb_digits;
         if (prec_padding > 0) {
                 output_char_loop(ctxt, '0', prec_padding);
