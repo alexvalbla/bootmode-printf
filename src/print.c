@@ -36,6 +36,10 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                 default:
                                         break;
                         }
+                        if (ctxt->flags&FLAG_LADJ) {
+                                // - flags overrides 0 flag
+                                ctxt->flags &= ~((uint16_t)(FLAG_ZERO));
+                        }
 
                         // field width modifier:
                         if (format[i] >= '1' && format[i] <= '9') {
