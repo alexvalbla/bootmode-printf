@@ -39,7 +39,4 @@ void output_n(bm_output_ctxt *ctxt, bm_va_list ap);
 void output_fp(bm_output_ctxt *ctxt, bm_va_list ap);
 
 
-// void pad_conversion(char fmt, char *str, uint8_t flags, uint16_t length, uint16_t field_width);
-
-
 #endif // formatting.h
