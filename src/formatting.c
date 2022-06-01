@@ -345,8 +345,20 @@ void output_p(bm_output_ctxt *ctxt, bm_va_list ap) {
 }
 
 void output_c(bm_output_ctxt *ctxt, bm_va_list ap) {
+        uint16_t flags = ctxt->flags;
+        uint16_t field_width = ctxt->field_width;
+        uint16_t padding_length = 0;
+        if (field_width && field_width > 1) {
+                padding_length = field_width-1;
+        }
+        if (!(flags&FLAG_LADJ)) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
         char c = (char)bm_va_arg(ap, int);
         output_char(ctxt, c);
+        if (flags&FLAG_LADJ) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
 }
 
 void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
