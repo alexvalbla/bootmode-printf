@@ -42,15 +42,24 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         }
 
                         // field width modifier:
-                        if (format[i] >= '1' && format[i] <= '9') {
+                        if ((format[i] >= '1' && format[i] <= '9') || format[i] == '*') {
                                 ctxt->flags |= FLAG_WDTH;
-                                uint16_t field_width = format[i++] - '0';
-                                while (format[i] >= '0' && format[i] <= '9') {
-                                        field_width = field_width*10 + (format[i++]-'0');
-                                        if (field_width > MAX_FIELD_WIDTH) {
-                                                // safeguard
-                                                field_width = MAX_FIELD_WIDTH;
+                                int field_width;
+                                if (format[i] == '*') {
+                                        int arg = bm_va_arg(ap, int);
+                                        field_width = (arg >= 0) ? arg : 0;
+                                        ++i;
+                                } else {
+                                        field_width = format[i++] - '0';
+                                        while (format[i] >= '0' && format[i] <= '9') {
+                                                field_width = field_width*10 + (format[i++]-'0');
                                         }
+                                }
+                                if (field_width < 0) {
+                                        // interpreted as - flag followed by a positive field width
+                                        ctxt->flags |= FLAG_LADJ;
+                                        ctxt->flags &= ~((uint16_t)(FLAG_ZERO)); // -flag overrides 0 flag
+                                        field_width = -field_width;
                                 }
                                 ctxt->field_width = field_width;
                         }
@@ -58,13 +67,21 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                         // precision modifier:
                         if (format[i] == '.') {
                                 ctxt->flags |= FLAG_PREC;
-                                uint16_t precision = 0;
+                                int precision;
                                 ++i;
-                                while(format[i] >= '0' && format[i] <= '9') {
-                                        precision = precision*10 + (format[i++]-'0');
-                                        if (precision > MAX_PREC) {
-                                                precision = MAX_PREC;
+                                if (format[i] == '*') {
+                                        int arg = bm_va_arg(ap, int);
+                                        precision = (arg >= 0) ? arg : 0;
+                                        ++i;
+                                } else {
+                                        precision = 0;
+                                        while(format[i] >= '0' && format[i] <= '9') {
+                                                precision = precision*10 + (format[i++]-'0');
                                         }
+                                }
+                                if (precision < 0) {
+                                        // interpreted as precision being omitted
+                                        ctxt->flags &= ~((uint16_t)(FLAG_PREC));
                                 }
                                 ctxt->precision = precision;
                         }

@@ -5,11 +5,6 @@
 #include "print.h"
 
 
-// adjustable if needed
-#define MAX_PREC 500
-#define MAX_FIELD_WIDTH 500
-
-
 typedef struct {
         char *output_str; // when writing to string, e.g. sprintf, snprintf ...
         size_t limit_n; // limit on the number of characters to be written, e.g. in snprintf
@@ -20,9 +15,8 @@ typedef struct {
         uint16_t field_width;
         uint16_t precision;
 
-        char lmods[3]; // length modifiers
+        char lmods[2]; // length modifiers
         char specifier;
-        // char padding_char; // either (space) or '0'
 } bm_output_ctxt;
 
 
