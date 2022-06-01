@@ -17,15 +17,12 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
         dblcst_t t;
         t.f = x;
 
-        // printf("%d\n", ARE_SAME_ENDIANNESS_INT_FLT);
-        // #if (ARE_SAME_ENDIANNESS_INT_FLT == 0)
-        // if (!ARE_SAME_ENDIANNESS_INT_FLT) {
-                // SWAP_BYTES(((char *)(&t.i))[0], ((char *)(&t.i))[7])
-                // SWAP_BYTES(((char *)(&t.i))[1], ((char *)(&t.i))[6])
-                // SWAP_BYTES(((char *)(&t.i))[2], ((char *)(&t.i))[5])
-                // SWAP_BYTES(((char *)(&t.i))[3], ((char *)(&t.i))[4])
-        // }
-        // #endif
+        if (!ARE_SAME_ENDIANNESS_INT_FLT) {
+                SWAP_BYTES(((char *)(&t.i))[0], ((char *)(&t.i))[7])
+                SWAP_BYTES(((char *)(&t.i))[1], ((char *)(&t.i))[6])
+                SWAP_BYTES(((char *)(&t.i))[2], ((char *)(&t.i))[5])
+                SWAP_BYTES(((char *)(&t.i))[3], ((char *)(&t.i))[4])
+        }
 
         *s = t.i >> 63;
         *E = (t.i >> 52) & 0x7FF;

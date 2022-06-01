@@ -10,10 +10,16 @@
 #endif
 
 
+// is endianness of integers and floating points the same ?
+// -> important for decomposition of floating points
+
+#define IS_BIG_ENDIAN_INT (*(uint16_t *)"\0\xFF" < 0x100)
+#define IS_BIG_ENDIAN_FLT (*(float *)"\xFF\0\0\0" < *(float *)"\0\0\0\xFF")
+#define ARE_SAME_ENDIANNESS_INT_FLT (IS_BIG_ENDIAN_INT == IS_BIG_ENDIAN_FLT)
+
 // defining bm_putchar:
 #include <stdio.h>
 #define bm_putchar putchar
-
 
 // defining bm_va_list functions
 #include <stdarg.h>
