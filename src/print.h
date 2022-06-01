@@ -29,6 +29,10 @@
 #define bm_va_arg va_arg
 #define bm_va_copy va_copy
 
+// error codes for following functions:
+#define STROUT_NUL (-1)
+#define FORMAT_NUL (-2)
+#define FORMAT_ERR (-3)
 
 int bootmode_vsnprintf(char *str, size_t size, const char *format, bm_va_list ap);
 

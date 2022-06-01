@@ -1,11 +1,14 @@
+#include "print.h"
 #include "formatting.h"
 
 
+static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
+        if (format == NULL) {
+                return FORMAT_NUL;
+        }
 
-void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
-        size_t i = 0; // used to keep track of where we are on the format string
-
-        // main loop
+        // main loop:
+        size_t i = 0; // where we are on the format string
         while(format[i] != '\0') {
                 if (format[i] != '%') {
                         // most common case: simply output the charater
@@ -95,6 +98,8 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                         // in a correct format specification, i.e. lld, hhu...
                                         // if more appear, we only count the first 2:
                                         ctxt->lmods[k++] = format[i];
+                                } else {
+                                        goto bad_format;
                                 }
                                 ++i;
                         }
@@ -159,61 +164,16 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
                                         continue; // back to main loop -> while(format[i] != '\0') {...}
 
                                 default:
-                                        // bad specifier
-                                        output_char(ctxt, ctxt->specifier);
-                                        break;
-                                        // goto BAD_FORMAT;
+                                        bad_format:
+                                        return FORMAT_ERR;
                         }
 
-        //
-        //                 if ((flags&FLAG_WDTH) && length < field_width) {
-        //                         pad_conversion(format[i], tmp, flags, length, field_width);
-        //                         length = field_width;
-        //                 }
-        //                 tmp[length] = '\0'; //should already be there, but just in case...
-        //
-        //                 //remember: need to reserve 1 byte for '\0' character
-        //                 //total is the number of character needed so far
-        //                 //BEFORE appending the new conversion
-        //                 if (total+1 < size) {
-        //                         size_t space_left = size-total-1;
-        //                         if (total+length < size) {
-        //                                 //space to copy the whole conversion
-        //                                 for(size_t i = 0; i < length; i++) {
-        //                                         str[str_idx++] = tmp[i];
-        //                                 }
-        //                         }
-        //                         else{
-        //                                 //copy strwhat you have space for
-        //                                 for(size_t i = 0; i < space_left; i++) {
-        //                                         str[str_idx++] = tmp[i];
-        //                                 }
-        //                         }
-        //                 }
-        //                 total += length;
-        //                 i++; //point to next format character
-        //                 continue; //back to beginning of main 'while' loop
-        //
-        //                 BAD_FORMAT:
-        //                 if (format[i] != '\0') {
-        //                         total++;
-        //                         if (total < size) {
-        //                                 //room for (at least) one more character
-        //                                 //before terminating null byte
-        //                                 str[str_idx++] = format[i];
-        //                         }
-        //                         i++;
-        //                 }
-        //                 else{
-        //                         str[str_idx] = '\0';
-        //                         return (int)total;
-        //                 }
                 } // end of 'if (format[i] == '%')'
+
         } // end of main 'while' loop
 
-        // printf("%zu\n", ctxt->total_written);
         append_nul(ctxt);
-        // return ctxt->total_needed;
+        return ctxt->total_needed;
 }
 
 
@@ -222,14 +182,20 @@ void main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list ap) {
 // printf-family functions
 
 int bootmode_vsnprintf(char *str, size_t size, const char *format, bm_va_list ap) {
+        if (str == NULL) {
+                return STROUT_NUL;
+        }
         bm_output_ctxt ctxt;
         initiate_ctxt(&ctxt, str);
         set_character_limit(&ctxt, size);
-        main_output_loop(&ctxt, format, ap);
-        return ctxt.total_needed;
+        int res = main_output_loop(&ctxt, format, ap);
+        return res;
 }
 
 int bootmode_vsprintf(char *str, const char *format, bm_va_list ap) {
+        if (str == NULL) {
+                return STROUT_NUL;
+        }
         bm_output_ctxt ctxt;
         initiate_ctxt(&ctxt, str);
         main_output_loop(&ctxt, format, ap);
