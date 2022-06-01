@@ -13,7 +13,6 @@ void initiate_ctxt(bm_output_ctxt *ctxt, char *output_str) {
         ctxt->flags = 0;
         ctxt->lmods[0] = '\0';
         ctxt->lmods[1] = '\0';
-        ctxt->lmods[2] = '\0';
 }
 
 void set_character_limit(bm_output_ctxt *ctxt, size_t n) {
