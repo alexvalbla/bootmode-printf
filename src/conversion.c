@@ -4,11 +4,6 @@
 #include "tableT2.h"
 
 
-// little macro to help correct endianness
-#define SWAP_BYTES(b1,b2)\
-        (b1) ^= (b2);\
-        (b2) ^= (b1);\
-        (b1) ^= (b2);
 
 // functions to decompose floating point numbers into
 // their constituent parts: sign, exponent, mantissa

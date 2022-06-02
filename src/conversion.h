@@ -4,6 +4,11 @@
 
 #include "print.h"
 
+// little macro to help correct endianness
+#define SWAP_BYTES(b1,b2)\
+        (b1) ^= (b2);\
+        (b2) ^= (b1);\
+        (b1) ^= (b2);
 
 typedef union{
   double f;
