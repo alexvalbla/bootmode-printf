@@ -27,7 +27,6 @@
 #define bm_va_start va_start
 #define bm_va_end va_end
 #define bm_va_arg va_arg
-#define bm_va_copy va_copy
 
 // error codes for following functions:
 #define STROUT_NUL (-1)
