@@ -342,27 +342,32 @@ void output_p(bm_output_ctxt *ctxt, bm_va_list ap) {
         output_x_inner(ctxt, (uint64_t)p);
 }
 
-void output_c(bm_output_ctxt *ctxt, bm_va_list ap) {
+static void pad_and_output_str(bm_output_ctxt *ctxt, const char *str, size_t len) {
         uint16_t flags = ctxt->flags;
         uint16_t field_width = ctxt->field_width;
-        uint16_t padding_length = 0;
-        if (field_width && field_width > 1) {
-                padding_length = field_width-1;
+
+        if ((flags&FLAG_WDTH) && len < field_width) {
+                size_t padding_length = field_width-len;
+                if (flags&FLAG_LADJ) {
+                        output_buffer(ctxt, str, len);
+                        output_char_loop(ctxt, ' ', padding_length);
+                } else {
+                        output_char_loop(ctxt, ' ', padding_length);
+                        output_buffer(ctxt, str, len);
+                }
+                return;
         }
-        if (!(flags&FLAG_LADJ)) {
-                output_char_loop(ctxt, ' ', padding_length);
-        }
+        output_buffer(ctxt, str, len);
+}
+
+void output_c(bm_output_ctxt *ctxt, bm_va_list ap) {
         char c = (char)bm_va_arg(ap, int);
-        output_char(ctxt, c);
-        if (flags&FLAG_LADJ) {
-                output_char_loop(ctxt, ' ', padding_length);
-        }
+        pad_and_output_str(ctxt, (const char *)&c, 1);
 }
 
 void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
         const char *s = bm_va_arg(ap, const char *);
         uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
         uint16_t precision = ctxt->precision;
         size_t len;
         if (s == NULL) {
@@ -378,19 +383,8 @@ void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
         if ((flags&FLAG_PREC) && precision < len) {
                 len = precision;
         }
-
-        if ((flags&FLAG_WDTH) && len < field_width) {
-                size_t padding_length = field_width-len;
-                if (flags&FLAG_LADJ) {
-                        output_buffer(ctxt, s, len);
-                        output_char_loop(ctxt, ' ', padding_length);
-                } else {
-                        output_char_loop(ctxt, ' ', padding_length);
-                        output_buffer(ctxt, s, len);
-                }
-                return;
-        }
-        output_buffer(ctxt, s, len);
+        
+        pad_and_output_str(ctxt, s, len);
 }
 
 void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {
