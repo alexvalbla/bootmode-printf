@@ -103,17 +103,55 @@ static int int_fmt_o(char *conv_buff, uint64_t a) {
         return i;
 }
 
-void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
-        int64_t a = extract_integer(ap, ctxt->lmods);
+static int integer_preprocessing(bm_output_ctxt *ctxt, uint64_t a, char *conv_buff, int nb_digits) {
+        if (ctxt->flags&FLAG_PREC) {
+                ctxt->flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
+        } else {
+                ctxt->precision = 1; // precision unspecified, taken to be 1
+        }
+        if (a == 0 && ctxt->precision > 0) {
+                // precision > 0 but a == 0 -> print at least 1 digit
+                conv_buff[0] = '0';
+                return 1; // increase nb_digits by 1
+        }
+        return 0; // leave nb_digits as is
+}
+
+static void pad_and_output_int(bm_output_ctxt *ctxt, char *conv_buff, int nb_digits, char *prefix, int prefix_len) {
         uint16_t flags = ctxt->flags;
         uint16_t field_width = ctxt->field_width;
         uint16_t precision = ctxt->precision;
-        if (flags&FLAG_PREC) {
-                flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
-        } else {
-                precision = 1; // precision unspecified, taken to be 1
+
+        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
+        int16_t total_length = nb_digits + prec_padding + prefix_len;
+        int padding_length = 0;
+        if (flags&FLAG_WDTH && total_length < field_width) {
+                padding_length = field_width - total_length;
         }
 
+        if (flags&FLAG_ZERO) {
+                if (prefix) {
+                        output_buffer(ctxt, prefix, prefix_len);
+                }
+                output_char_loop(ctxt, '0', prec_padding+padding_length);
+                output_buffer(ctxt, conv_buff, nb_digits);
+        } else {
+                if (!(flags&FLAG_LADJ)) {
+                        output_char_loop(ctxt, ' ', padding_length);
+                }
+                if (prefix_len) {
+                        output_buffer(ctxt, prefix, prefix_len);
+                }
+                output_char_loop(ctxt, '0', prec_padding);
+                output_buffer(ctxt, conv_buff, nb_digits);
+                if (flags&FLAG_LADJ) {
+                        output_char_loop(ctxt, ' ', padding_length);
+                }
+        }
+}
+
+void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
+        int64_t a = extract_integer(ap, ctxt->lmods);
         uint64_t b;
         if (a < 0) {
                 b = *((uint64_t *)&a); // bitwise copy
@@ -131,92 +169,29 @@ void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
 
         char conv_buff[32];
         int nb_digits = int_fmt_d(conv_buff, b);
-        if (a == 0 && precision > 0) {
-                // precision > 0 but a == 0 -> print at least 1 digit
-                conv_buff[0] = '0';
-                ++nb_digits;
-        }
+        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
 
-        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
-        int16_t total_length = nb_digits + prec_padding + 1; // provisional +1 for sign character
         char sign_char;
+        int sign_len = 1;
         if (a < 0) {
                 sign_char = '-';
-        } else if (flags&FLAG_SIGN) {
+        } else if (ctxt->flags&FLAG_SIGN) {
                 sign_char = '+';
-        } else if (flags&FLAG_WSPC) {
+        } else if (ctxt->flags&FLAG_WSPC) {
                 sign_char = ' ';
         } else {
-                sign_char = 0; // will not be printed
-                --total_length; // remove provisional +1
+                sign_len = 0; // will not be printed
         }
 
-        int padding_length = 0;
-        if (flags&FLAG_WDTH && total_length < field_width) {
-                padding_length = field_width - total_length;
-        }
-
-        if (flags&FLAG_ZERO) {
-                if (sign_char) {
-                        output_char(ctxt, sign_char);
-                }
-                output_char_loop(ctxt, '0', prec_padding+padding_length);
-                output_buffer(ctxt, conv_buff, nb_digits);
-        } else {
-                if (!(flags&FLAG_LADJ)) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-                if (sign_char) {
-                        output_char(ctxt, sign_char);
-                }
-                output_char_loop(ctxt, '0', prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-                if (flags&FLAG_LADJ) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-        }
+        pad_and_output_int(ctxt, conv_buff, nb_digits, &sign_char, sign_len);
 }
 
 void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
         uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
-        uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
-        uint16_t precision = ctxt->precision;
-        if (flags&FLAG_PREC) {
-                flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
-        } else {
-                precision = 1; // precision unspecified, taken to be 1
-        }
-
         char conv_buff[32];
         int nb_digits = int_fmt_d(conv_buff, a);
-        if (a == 0 && precision > 0) {
-                // precision > 0 but a == 0 -> print at least 1 digit
-                conv_buff[0] = '0';
-                ++nb_digits;
-        }
-
-        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
-        int16_t total_length = nb_digits + prec_padding;
-
-        int padding_length = 0;
-        if (flags&FLAG_WDTH && total_length < field_width) {
-                padding_length = field_width - total_length;
-        }
-
-        if (flags&FLAG_ZERO) {
-                output_char_loop(ctxt, '0', prec_padding+padding_length);
-                output_buffer(ctxt, conv_buff, nb_digits);
-        } else {
-                if (!(flags&FLAG_LADJ)) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-                output_char_loop(ctxt, '0', prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-                if (flags&FLAG_LADJ) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-        }
+        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
+        pad_and_output_int(ctxt, conv_buff, nb_digits, NULL, 0);
 }
 
 void output_x_inner(bm_output_ctxt *ctxt, uint64_t a);
@@ -228,111 +203,39 @@ void output_x(bm_output_ctxt *ctxt, bm_va_list ap) {
 
 void output_x_inner(bm_output_ctxt *ctxt, uint64_t a) {
         // sub-function that can be used for %p as well
-        uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
-        uint16_t precision = ctxt->precision;
-        if (flags&FLAG_PREC) {
-                flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
-        } else {
-                precision = 1; // precision unspecified, taken to be 1
-        }
-
         char conv_buff[32];
-        int nb_digits = int_fmt_x(conv_buff, a, flags);
-        if (a == 0 && precision > 0) {
-                // precision > 0 but a == 0 -> print at least 1 digit
-                conv_buff[0] = '0';
-                ++nb_digits;
-        }
-
-        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
-        int16_t total_length = nb_digits + prec_padding;
+        int nb_digits = int_fmt_x(conv_buff, a, ctxt->flags);
+        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
 
         char Ox_pref[2] = {0, 0};
         int Ox_pref_len = 0;
-        if ((flags&FLAG_ALTF) && a > 0) {
+        if ((ctxt->flags&FLAG_ALTF) && a > 0) {
                 Ox_pref_len = 2;
-                total_length += Ox_pref_len;
+                // total_length += Ox_pref_len;
                 Ox_pref[0] = '0';
-                Ox_pref[1] = (flags&FLAG_UCAS) ? 'X' : 'x';
+                Ox_pref[1] = (ctxt->flags&FLAG_UCAS) ? 'X' : 'x';
         }
 
-        int padding_length = 0;
-        if (flags&FLAG_WDTH && total_length < field_width) {
-                padding_length = field_width - total_length;
-        }
-
-        if (flags&FLAG_ZERO) {
-                output_buffer(ctxt, Ox_pref, Ox_pref_len);
-                output_char_loop(ctxt, '0', padding_length+prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-        } else {
-                if (!(flags&FLAG_LADJ)) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-                output_buffer(ctxt, Ox_pref, Ox_pref_len);
-                output_char_loop(ctxt, '0', prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-                if (flags&FLAG_LADJ) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-        }
+        pad_and_output_int(ctxt, conv_buff, nb_digits, Ox_pref, Ox_pref_len);
 }
 
 void output_o(bm_output_ctxt *ctxt, bm_va_list ap) {
         uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
-        uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
-        uint16_t precision = ctxt->precision;
-        if (flags&FLAG_PREC) {
-                flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
-        } else {
-                precision = 1; // precision unspecified, taken to be 1
-        }
-
         char conv_buff[32];
         int nb_digits = int_fmt_o(conv_buff, a);
-        if (a == 0 && precision > 0) {
-                // precision > 0 but a == 0 -> print at least 1 digit
+        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
+
+        if ((ctxt->flags&FLAG_ALTF) && conv_buff[0] != '0') {
+                int n = nb_digits;
+                while (n) {
+                        conv_buff[n] = conv_buff[n-1];
+                        --n;
+                }
                 conv_buff[0] = '0';
                 ++nb_digits;
         }
 
-        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
-        int16_t total_length = nb_digits + prec_padding;
-
-        char leading_0 = 0;
-        if ((flags&FLAG_ALTF) && conv_buff[0] != '0') {
-                leading_0 = '0';
-                if (prec_padding > 0) {
-                        --prec_padding;
-                } else {
-                        ++total_length;
-                }
-        }
-
-        int padding_length = 0;
-        if (flags&FLAG_WDTH && total_length < field_width) {
-                padding_length = field_width - total_length;
-        }
-
-        if (flags&FLAG_ZERO) {
-                if (leading_0) ++padding_length;
-                output_char_loop(ctxt, '0', padding_length+prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-        } else {
-                if (!(flags&FLAG_LADJ)) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-                if (leading_0) {
-                        output_char(ctxt, '0');
-                }
-                output_char_loop(ctxt, '0', prec_padding);
-                output_buffer(ctxt, conv_buff, nb_digits);
-                if (flags&FLAG_LADJ) {
-                        output_char_loop(ctxt, ' ', padding_length);
-                }
-        }
+        pad_and_output_int(ctxt, conv_buff, nb_digits, NULL, 0);
 }
 
 void output_p(bm_output_ctxt *ctxt, bm_va_list ap) {
@@ -383,7 +286,7 @@ void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
         if ((flags&FLAG_PREC) && precision < len) {
                 len = precision;
         }
-        
+
         pad_and_output_str(ctxt, s, len);
 }
 
