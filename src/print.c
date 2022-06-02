@@ -15,7 +15,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                         output_char(ctxt, format[i++]);
                 } else {
                         // this is where the fun begins...
-                        REMOVE_FORMATTING_FLAGS(ctxt->flags); // clean slate
+                        REMOVE_FORMATTING_FLAGS(ctxt->flags) // clean slate
 
                         // mark flags:
                         begin_flag_loop:
@@ -97,11 +97,10 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                         // normally, no more than 2 length modifiers,
                                         // in a correct format specification, i.e. lld, hhu...
                                         // if more appear, we only count the first 2:
-                                        ctxt->lmods[k++] = format[i];
+                                        ctxt->lmods[k++] = format[i++];
                                 } else {
                                         goto bad_format;
                                 }
-                                ++i;
                         }
 
                         // argument conversion:
@@ -170,7 +169,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
 
                 } // end of 'if (format[i] == '%')'
 
-        } // end of main 'while' loop
+        } // end of main loop
 
         append_nul(ctxt);
         return ctxt->total_needed;
@@ -198,15 +197,15 @@ int bootmode_vsprintf(char *str, const char *format, bm_va_list ap) {
         }
         bm_output_ctxt ctxt;
         initiate_ctxt(&ctxt, str);
-        main_output_loop(&ctxt, format, ap);
-        return ctxt.total_written;
+        int res = main_output_loop(&ctxt, format, ap);
+        return res;
 }
 
 int bootmode_vprintf(const char *format, bm_va_list ap) {
         bm_output_ctxt ctxt;
         initiate_ctxt(&ctxt, NULL);
-        main_output_loop(&ctxt, format, ap);
-        return ctxt.total_written;
+        int res = main_output_loop(&ctxt, format, ap);
+        return res;
 }
 
 int bootmode_snprintf(char *str, size_t size, const char *format, ...) {

@@ -8,9 +8,7 @@ static void str_rev(char *s, size_t size) {
         char *p = s + size;
         --p;
         while (s < p) {
-                *s ^= *p;
-                *p ^= *s;
-                *s ^= *p;
+                SWAP_BYTES(*s, *p)
                 ++s;
                 --p;
         }
