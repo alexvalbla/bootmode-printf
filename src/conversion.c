@@ -53,7 +53,7 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
 fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
         longdblcst_t t;
         t.f = x;
-        *s = t.i >> 79;
+        *s = (t.i >> 79) & 1;
         *E = (t.i >> 64) & 0x7FFF;
         *m = (uint64_t)t.i;
 
