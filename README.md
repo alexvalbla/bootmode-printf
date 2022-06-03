@@ -33,6 +33,7 @@ Note that "double" is taken to mean a IEEE-754 64-bit floating point number, and
  -> reading a "long double" from left to right: 48 padding bits, 1 sign bit, 15 exponent bits, 64 mantissa bits (the leading mantissa bit being explicit i nthis case). See the IEEE-754 norm.
 The precision modifier for floating point conversions is capped at 18 or 19 depending on the format (%e, %E, %f, %F, %g or %G) so as not to show more than 19 significant digits (for instance 18 digits after the decimal point when using %e format: e.g. converting a (double) argument with the formating string "%.500e" -> (-)D.DDDDDDDDDDDDDDDDDDe[+/-]XYZ, where each 'D' represents a decimal mantissa digit, and 'XYZ' represents the decimal exponent).
 This is because the conversion algorithm (explained in algorithm.pdf), in the best of cases, cannot give us more than 19 valid decimal digits.
+The conversion algorithm has a (small) margin of error. You may notice for instance that the floating point 0.15 is converted to 0.14999999999... If this value were formatted as %.3f for instance, it could printed as 0.150 (by rounding using the remaining unprinted digits). This is not done, however, because doing so would not be rigorous, i.e. rounding of an already inexact value. Instead, the unused conversion digits are simply truncated.
 
 # Ongoing work
 These "printf-family" functions are written to the specification detailed in https://man7.org/linux/man-pages/man3/printf.3.html, barring a few exceptions (some of these missing features may be added in the near future):
