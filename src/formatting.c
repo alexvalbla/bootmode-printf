@@ -340,6 +340,10 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
         } else {
                 class = decomposeDouble(&s, &E, &m, bm_va_arg(ap, double));
         }
+        if (!(ctxt->flags&FLAG_PREC)) {
+                // precision missing, taken as 6:
+                ctxt->precision = 6;
+        }
         if (class == BM_NUMBER) {
                 decimalConversion(&F, &n, E, m);
                 switch (ctxt->specifier) {
@@ -365,13 +369,8 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         uint16_t precision = ctxt->precision;
         uint16_t flags = ctxt->flags;
         // adjust precision
-        if (flags&FLAG_PREC) {
-                if (precision > 18) {
-                        precision = 18;
-                }
-        } else {
-                // no precision specified, taken as 6
-                precision = 6;
+        if (precision > 18) {
+                precision = 18;
         }
 
         // sign
@@ -433,13 +432,8 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         uint16_t precision = ctxt->precision;
         uint16_t flags = ctxt->flags;
         // adjust precision
-        if (flags&FLAG_PREC) {
-                if (precision > 19) {
-                        precision = 19;
-                }
-        } else {
-                // no precision specified, taken as 6
-                precision = 6;
+        if (precision > 19) {
+                precision = 19;
         }
 
         // sign
@@ -508,16 +502,11 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
 void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         int32_t sig_digits = ctxt->precision;
         uint16_t flags = ctxt->flags;
-        if (flags&FLAG_PREC) {
-                if (sig_digits > 19) {
-                        sig_digits = 19;
-                } else if (sig_digits == 0) {
-                        // always at least 1
-                        sig_digits = 1;
-                }
-        } else {
-                // no precision specified, taken as 6
-                sig_digits = 6;
+        if (sig_digits > 19) {
+                sig_digits = 19;
+        } else if (sig_digits == 0) {
+                // always at least 1
+                sig_digits = 1;
         }
 
         // sign
