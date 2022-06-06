@@ -18,7 +18,7 @@ HEADER=$(LIBDIR)/$(LIB_BASE_NAME).h
 
 all: $(LIB)
 
-release: CFLAGS=-Wall -O2 -DNDEBUG
+release: CFLAGS=-Wall -Oz -DNDEBUG
 release: clean
 release: all
 
