@@ -11,8 +11,6 @@ void initiate_ctxt(bm_output_ctxt *ctxt, char *output_str) {
         ctxt->total_needed = 0;
         ctxt->total_written = 0;
         ctxt->flags = 0;
-        ctxt->lmods[0] = '\0';
-        ctxt->lmods[1] = '\0';
 }
 
 void set_character_limit(bm_output_ctxt *ctxt, size_t n) {

@@ -91,6 +91,8 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
 
                         // length modifiers:
                         int k = 0;
+                        ctxt->lmods[0] = 0;
+                        ctxt->lmods[1] = 0;
                         while(format[i] == 'l' || format[i] == 'h' || format[i] == 'L' || format[i] == 'z') {
                                 // absorb all length modifiers
                                 if (k < 2) {
