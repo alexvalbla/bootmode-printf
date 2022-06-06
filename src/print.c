@@ -49,8 +49,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 ctxt->flags |= FLAG_WDTH;
                                 int field_width;
                                 if (format[i] == '*') {
-                                        int arg = bm_va_arg(ap, int);
-                                        field_width = (arg >= 0) ? arg : 0;
+                                        field_width = bm_va_arg(ap, int);
                                         ++i;
                                 } else {
                                         field_width = format[i++] - '0';
@@ -61,7 +60,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 if (field_width < 0) {
                                         // interpreted as - flag followed by a positive field width
                                         ctxt->flags |= FLAG_LADJ;
-                                        ctxt->flags &= ~((uint16_t)(FLAG_ZERO)); // -flag overrides 0 flag
+                                        ctxt->flags &= ~((uint16_t)FLAG_ZERO); // -flag overrides 0 flag
                                         field_width = -field_width;
                                 }
                                 ctxt->field_width = field_width;
@@ -73,8 +72,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 int precision;
                                 ++i;
                                 if (format[i] == '*') {
-                                        int arg = bm_va_arg(ap, int);
-                                        precision = (arg >= 0) ? arg : 0;
+                                        precision = bm_va_arg(ap, int);
                                         ++i;
                                 } else {
                                         precision = 0;
@@ -84,15 +82,15 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 }
                                 if (precision < 0) {
                                         // interpreted as precision being omitted
-                                        ctxt->flags &= ~((uint16_t)(FLAG_PREC));
+                                        ctxt->flags &= ~((uint16_t)FLAG_PREC);
                                 }
                                 ctxt->precision = precision;
                         }
 
                         // length modifiers:
-                        int k = 0;
                         ctxt->lmods[0] = 0;
                         ctxt->lmods[1] = 0;
+                        int k = 0;
                         while(format[i] == 'l' || format[i] == 'h' || format[i] == 'L' || format[i] == 'z') {
                                 // absorb all length modifiers
                                 if (k < 2) {
