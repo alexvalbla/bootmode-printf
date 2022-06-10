@@ -11,7 +11,7 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
         size_t i = 0; // where we are on the format string
         while(format[i] != '\0') {
                 if (format[i] != '%') {
-                        // most common case: simply output the charater
+                        // most common case: simply output the character
                         output_char(ctxt, format[i++]);
                 } else {
                         // this is where the fun begins...
