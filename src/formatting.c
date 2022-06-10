@@ -14,110 +14,124 @@ static void str_rev(char *s, size_t size) {
         }
 }
 
-static unsigned long long extract_unsigned_integer(bm_va_list ap, char *lmods) {
-        unsigned long long a;
-        if (lmods[0] == 'l' && lmods[1] == '\0') {
+static int int_fmt(bm_output_ctxt *ctxt, char *conv_buff, uintmax_t a) {
+        int i = 0;
+        while (a > 0) {
+                int digit = a%ctxt->base;
+                conv_buff[i++] = (digit < 10) ? digit+'0' : (ctxt->flags&FLAG_UCAS) ? digit-10+'A' : digit-10+'a';
+                a /= ctxt->base;
+        }
+        str_rev(conv_buff, i);
+        conv_buff[i] = '\0';
+        return i;
+}
+
+void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
+        // extract integer argument:
+        uintmax_t a;
+        size_t arg_sz;
+        char *lmods = ctxt->lmods;
+        if (ctxt->specifier == 'p') {
+                a = (uintmax_t)bm_va_arg(ap, void *);
+                arg_sz = sizeof(void *);
+                // %p equivalent to %#x or %#lx:
+                ctxt->flags |= FLAG_ALTF;
+                ctxt->specifier = 'x';
+        } else if (lmods[0] == 'l' && lmods[1] == '\0') {
                 a = bm_va_arg(ap, unsigned long);
-        }
-        else if (lmods[0] == 'l' && lmods[1] == 'l') {
+                arg_sz = sizeof(unsigned long);
+        } else if (lmods[0] == 'l' && lmods[1] == 'l') {
                 a = bm_va_arg(ap, unsigned long long);
-        }
-        else if (lmods[0] == 'h' && lmods[1] == '\0') {
+                arg_sz = sizeof(unsigned long long);
+        } else if (lmods[0] == 'h' && lmods[1] == '\0') {
                 a = bm_va_arg(ap, unsigned int);
-        }
-        else if (lmods[0] == 'h' && lmods[1] == 'h') {
+                arg_sz = sizeof(unsigned int);
+        } else if (lmods[0] == 'h' && lmods[1] == 'h') {
                 a = bm_va_arg(ap, unsigned int);
-        }
-        else if (lmods[0] == 'z' && lmods[1] == '\0') {
+                arg_sz = sizeof(unsigned int);
+        } else if (lmods[0] == 'z' && lmods[1] == '\0') {
                 a = bm_va_arg(ap, size_t);
-        }
-        else {
+                arg_sz = sizeof(size_t);
+        } else if (lmods[0] == 't' && lmods[1] == '\0') {
+                a = bm_va_arg(ap, ptrdiff_t);
+                arg_sz = sizeof(ptrdiff_t);
+        } else if (lmods[0] == 'j' && lmods[1] == '\0') {
+                a = bm_va_arg(ap, uintmax_t);
+                arg_sz = sizeof(uintmax_t);
+        } else {
                 a = bm_va_arg(ap, unsigned int);
+                arg_sz = sizeof(unsigned int);
         }
-        return a;
-}
 
-static long long extract_integer(bm_va_list ap, char *lmods) {
-        long long a;
-        if (lmods[0] == 'l' && lmods[1] == '\0') {
-                a = bm_va_arg(ap, long);
-        }
-        else if (lmods[0] == 'l' && lmods[1] == 'l') {
-                a = bm_va_arg(ap, long long);
-        }
-        else if (lmods[0] == 'h' && lmods[1] == '\0') {
-                a = bm_va_arg(ap, int);
-        }
-        else if (lmods[0] == 'h' && lmods[1] == 'h') {
-                a = bm_va_arg(ap, int);
-        }
-        else if (lmods[0] == 'z' && lmods[1] == '\0') {
-                a = bm_va_arg(ap, ssize_t);
-        }
-        else {
-                a = bm_va_arg(ap, int);
-        }
-        return a;
-}
-
-static int int_fmt_d(char *conv_buff, uint64_t a) {
-        int i = 0;
-        while (a != 0) {
-                conv_buff[i++] = '0' + a%10;
-                a /= 10;
-        }
-        str_rev(conv_buff, i);
-        conv_buff[i] = '\0';
-        return i;
-}
-
-static int int_fmt_x(char *conv_buff, uint64_t a, uint16_t flags) {
-        int i = 0;
-        while (a != 0) {
-                char hex = a & 0x0F; // 0x0F ==  b'1111' -> get 4 bits of lowest order
-                if (hex < 10) {
-                        conv_buff[i++] = '0' + hex;
-                } else {
-                        hex = hex - 10 + 'a';
-                        if (flags&FLAG_UCAS) {
-                                hex += 'A' - 'a'; // switch to upper case
+        // convert argument to digits:
+        char conv_buff[32];
+        int nb_digits = 0;
+        uintmax_t mask;
+        char prefix[2];
+        char prefix_len = 0; // provisionally
+        switch (ctxt->specifier) {
+                case 'X':
+                case 'x':
+                        ctxt->base = 16;
+                        if ((ctxt->flags&FLAG_ALTF) && a > 0) {
+                                prefix_len = 2;
+                                prefix[0] = '0';
+                                prefix[1] = ctxt->specifier; // either 'x' or 'X'
                         }
-                        conv_buff[i++] = hex;
-                }
-                a >>= 4;
+                        break;
+                case 'o':
+                        ctxt->base = 8;
+                        break;
+                case 'i':
+                case 'd':
+                        prefix_len = 1; // provisionally, for sign character
+                        arg_sz <<= 3; // x8 to get size in bits
+                        mask = ((uintmax_t)1) << (arg_sz-1); // aim at sign bit
+                        if (a & mask) {
+                                // sign bit is set, argument was negative
+                                // 2's complement representation of argument...
+                                // ... as an integer of size uintmax_t:
+                                a |= ~(mask-1); // <- all bits after sign bit must be set to 1
+                                a = ~(a-1); // <- 2's complement for absolute value
+                                prefix[0] = '-';
+                        } else if (ctxt->flags&FLAG_SIGN) {
+                                prefix[0] = '+';
+                        } else if (ctxt->flags&FLAG_WSPC) {
+                                prefix[0] = ' ';
+                        } else {
+                                prefix_len = 0; // no sign character
+                        }
+                        // fall through
+                default:
+                        ctxt->base = 10; // for 'i', 'd', and 'u'
+                        break;
         }
-        str_rev(conv_buff, i);
-        conv_buff[i] = '\0';
-        return i;
-}
+        nb_digits = int_fmt(ctxt, conv_buff, a);
 
-static int int_fmt_o(char *conv_buff, uint64_t a) {
-        int i = 0;
-        while (a != 0) {
-                char oct = a & 7; // 7 ==  b'111' -> get 3 bits of lowest order
-                conv_buff[i++] = '0' + oct;
-                a >>= 3;
-        }
-        str_rev(conv_buff, i);
-        conv_buff[i] = '\0';
-        return i;
-}
-
-static int integer_preprocessing(bm_output_ctxt *ctxt, uint64_t a, char *conv_buff, int nb_digits) {
+        // postprocessing:
         if (ctxt->flags&FLAG_PREC) {
-                ctxt->flags &= ~((uint16_t)(FLAG_ZERO)); // precision specified, remove 0 flag
+                ctxt->flags &= ~((uint16_t)FLAG_ZERO); // precision specified, remove 0 flag
         } else {
                 ctxt->precision = 1; // precision unspecified, taken to be 1
         }
         if (a == 0 && ctxt->precision > 0) {
                 // precision > 0 but a == 0 -> print at least 1 digit
                 conv_buff[0] = '0';
-                return 1; // increase nb_digits by 1
+                nb_digits += 1;
+        } else if (ctxt->specifier == 'o') {
+                if ((ctxt->flags&FLAG_ALTF) && conv_buff[0] != '0') {
+                        // first digit must be 0
+                        int n = nb_digits;
+                        while (n > 0) {
+                                conv_buff[n] = conv_buff[n-1];
+                                --n;
+                        }
+                        conv_buff[0] = '0';
+                        ++nb_digits;
+                }
         }
-        return 0; // leave nb_digits as is
-}
 
-static void pad_and_output_int(bm_output_ctxt *ctxt, char *conv_buff, int nb_digits, char *prefix, int prefix_len) {
+        // padd then output conversion:
         uint16_t flags = ctxt->flags;
         uint16_t field_width = ctxt->field_width;
         uint16_t precision = ctxt->precision;
@@ -130,7 +144,7 @@ static void pad_and_output_int(bm_output_ctxt *ctxt, char *conv_buff, int nb_dig
         }
 
         if (flags&FLAG_ZERO) {
-                if (prefix) {
+                if (prefix_len > 0) {
                         output_buffer(ctxt, prefix, prefix_len);
                 }
                 output_char_loop(ctxt, '0', prec_padding+padding_length);
@@ -139,7 +153,7 @@ static void pad_and_output_int(bm_output_ctxt *ctxt, char *conv_buff, int nb_dig
                 if (!(flags&FLAG_LADJ)) {
                         output_char_loop(ctxt, ' ', padding_length);
                 }
-                if (prefix_len) {
+                if (prefix_len > 0) {
                         output_buffer(ctxt, prefix, prefix_len);
                 }
                 output_char_loop(ctxt, '0', prec_padding);
@@ -148,101 +162,6 @@ static void pad_and_output_int(bm_output_ctxt *ctxt, char *conv_buff, int nb_dig
                         output_char_loop(ctxt, ' ', padding_length);
                 }
         }
-}
-
-void output_d(bm_output_ctxt *ctxt, bm_va_list ap) {
-        int64_t a = extract_integer(ap, ctxt->lmods);
-        uint64_t b;
-        if (a < 0) {
-                b = *((uint64_t *)&a); // bitwise copy
-                // 0x8000000000000000 == +2^(63) as unsigned integer
-                // 0x8000000000000000 == -2^(63) as signed integer
-                if (b != 0x8000000000000000) {
-                        b = -a;
-                }
-                // else a == -2^63, and we already have b == -a
-                // since 64-bit signed integers cannot hold 2^(63)
-                // doing "b = -a;" might be undefined
-        } else {
-                b = a;
-        }
-
-        char conv_buff[32];
-        int nb_digits = int_fmt_d(conv_buff, b);
-        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
-
-        char sign_char;
-        int sign_len = 1;
-        if (a < 0) {
-                sign_char = '-';
-        } else if (ctxt->flags&FLAG_SIGN) {
-                sign_char = '+';
-        } else if (ctxt->flags&FLAG_WSPC) {
-                sign_char = ' ';
-        } else {
-                sign_len = 0; // will not be printed
-        }
-
-        pad_and_output_int(ctxt, conv_buff, nb_digits, &sign_char, sign_len);
-}
-
-void output_u(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
-        char conv_buff[32];
-        int nb_digits = int_fmt_d(conv_buff, a);
-        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
-        pad_and_output_int(ctxt, conv_buff, nb_digits, NULL, 0);
-}
-
-void output_x_inner(bm_output_ctxt *ctxt, uint64_t a);
-
-void output_x(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
-        output_x_inner(ctxt, a);
-}
-
-void output_x_inner(bm_output_ctxt *ctxt, uint64_t a) {
-        // sub-function that can be used for %p as well
-        char conv_buff[32];
-        int nb_digits = int_fmt_x(conv_buff, a, ctxt->flags);
-        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
-
-        char Ox_pref[2] = {0, 0};
-        int Ox_pref_len = 0;
-        if ((ctxt->flags&FLAG_ALTF) && a > 0) {
-                Ox_pref_len = 2;
-                // total_length += Ox_pref_len;
-                Ox_pref[0] = '0';
-                Ox_pref[1] = (ctxt->flags&FLAG_UCAS) ? 'X' : 'x';
-        }
-
-        pad_and_output_int(ctxt, conv_buff, nb_digits, Ox_pref, Ox_pref_len);
-}
-
-void output_o(bm_output_ctxt *ctxt, bm_va_list ap) {
-        uint64_t a = extract_unsigned_integer(ap, ctxt->lmods);
-        char conv_buff[32];
-        int nb_digits = int_fmt_o(conv_buff, a);
-        nb_digits += integer_preprocessing(ctxt, a, conv_buff, nb_digits);
-
-        if ((ctxt->flags&FLAG_ALTF) && conv_buff[0] != '0') {
-                int n = nb_digits;
-                while (n) {
-                        conv_buff[n] = conv_buff[n-1];
-                        --n;
-                }
-                conv_buff[0] = '0';
-                ++nb_digits;
-        }
-
-        pad_and_output_int(ctxt, conv_buff, nb_digits, NULL, 0);
-}
-
-void output_p(bm_output_ctxt *ctxt, bm_va_list ap) {
-        // equivalent to %#x or %#lx
-        ctxt->flags |= FLAG_ALTF;
-        void *p = bm_va_arg(ap, void *);
-        output_x_inner(ctxt, (uint64_t)p);
 }
 
 static void pad_and_output_str(bm_output_ctxt *ctxt, const char *str, size_t len) {
@@ -345,6 +264,7 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
                 ctxt->precision = 6;
         }
         if (class == BM_NUMBER) {
+                ctxt->base = 10;
                 decimalConversion(&F, &n, E, m);
                 switch (ctxt->specifier) {
                         case 'e':
@@ -393,7 +313,7 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                 // n has 19 digits (10^18 <= n < 10^19)
                 // we want 1 digit before the decimal point
                 // so we increase the decimal exponent by 18
-                int_fmt_d(n_array, n);
+                int_fmt(ctxt, n_array, n);
                 F += 18;
         }
         output_char(ctxt, n_array[0]);
@@ -404,7 +324,7 @@ void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
 
         int32_t F_abs_val = (F < 0) ? -F : F;
         char F_array[10];
-        int F_digits = int_fmt_d(F_array, F_abs_val);
+        int F_digits = int_fmt(ctxt, F_array, F_abs_val);
 
         // write decimal exponent
         char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
@@ -459,7 +379,7 @@ void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                 return;
         } else {
                 digits_before_point = F+19; // n has 19 decimals
-                int_fmt_d(n_array, n);
+                int_fmt(ctxt, n_array, n);
         }
 
         if (digits_before_point >= 19) {
@@ -519,7 +439,7 @@ void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
         }
 
         char n_array[20];
-        int nb_digits = int_fmt_d(n_array, n);
+        int nb_digits = int_fmt(ctxt, n_array, n);
         if (nb_digits == 0) {
                 // floating point is zero
                 output_char(ctxt, '0');
@@ -551,7 +471,7 @@ void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
                 // write decimal exponent
                 int32_t e_abs = (exp_e < 0) ? -exp_e : exp_e;
                 char e_array[10];
-                int e_digits = int_fmt_d(e_array, e_abs);
+                int e_digits = int_fmt(ctxt, e_array, e_abs);
                 char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
                 output_char(ctxt, 'e' + e_adjust);
                 if (exp_e < 0) {

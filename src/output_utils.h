@@ -17,6 +17,7 @@ typedef struct {
 
         char lmods[2]; // length modifiers
         char specifier;
+        char base;
 } bm_output_ctxt;
 
 

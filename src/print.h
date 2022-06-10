@@ -3,6 +3,7 @@
 
 
 // defining integer types
+#include <stddef.h>
 #include <stdint.h>
 // check for (unsigned) 128-bit integers:
 #ifndef __SIZEOF_INT128__

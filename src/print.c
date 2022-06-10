@@ -112,27 +112,12 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                         switch(ctxt->specifier) {
                                 case 'i':
                                 case 'd':
-                                        output_d(ctxt, ap);
-                                        break;
-
                                 case 'u':
-                                        output_u(ctxt, ap);
-                                        break;
-
                                 case 'X':
-                                        ctxt->flags |= FLAG_UCAS;
-                                        // fall through
                                 case 'x':
-                                        output_x(ctxt, ap);
-                                        break;
-
                                 case 'o':
-                                        output_o(ctxt, ap);
-                                        break;
-
                                 case 'p':
-                                        output_p(ctxt, ap);
-                                        break;
+                                        output_int(ctxt, ap);
 
                                 case 'E':
                                 case 'F':

@@ -19,6 +19,7 @@
 // for bootmode_snprintf and bootmode_vsnprintf:
 #define FLAG_LIMIT 0x100 // limit n for character output is set
 
+void output_int(bm_output_ctxt *ctxt, bm_va_list ap);
 
 void output_d(bm_output_ctxt *ctxt, bm_va_list ap);
 
