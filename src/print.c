@@ -39,10 +39,6 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 default:
                                         break;
                         }
-                        if (ctxt->flags&FLAG_LADJ) {
-                                // - flags overrides 0 flag
-                                ctxt->flags &= ~((uint16_t)(FLAG_ZERO));
-                        }
 
                         // field width modifier:
                         if ((format[i] >= '1' && format[i] <= '9') || format[i] == '*') {
@@ -60,10 +56,14 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 if (field_width < 0) {
                                         // interpreted as - flag followed by a positive field width
                                         ctxt->flags |= FLAG_LADJ;
-                                        ctxt->flags &= ~((uint16_t)FLAG_ZERO); // -flag overrides 0 flag
                                         field_width = -field_width;
                                 }
                                 ctxt->field_width = field_width;
+                        }
+
+                        if (ctxt->flags&FLAG_LADJ) {
+                                // - flags overrides 0 flag
+                                ctxt->flags &= ~((uint16_t)(FLAG_ZERO));
                         }
 
                         // precision modifier:
@@ -130,14 +130,6 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                 case 'g':
                                         output_fp(ctxt, ap);
                                         break;
-
-                                // case 'c':
-                                //         output_c(ctxt, ap);
-                                //         break;
-                                //
-                                // case 's':
-                                //         output_s(ctxt, ap);
-                                //         break;
 
                                 case 'c':
                                 case 's':
