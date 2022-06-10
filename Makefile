@@ -19,7 +19,7 @@ HEADER=$(LIBDIR)/$(LIB_BASE_NAME).h
 all: $(LIB)
 
 release: CFLAGS=-Wall -Oz -DNDEBUG
-release: clean
+release: clobber
 release: all
 
 $(LIB): $(OBJS) $(LIBDIR)
