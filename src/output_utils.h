@@ -12,8 +12,8 @@ typedef struct {
         size_t total_written; // total number of characters written so far
 
         uint16_t flags;
-        uint16_t field_width;
-        uint16_t precision;
+        unsigned int field_width;
+        unsigned int precision;
 
         char lmods[2]; // length modifiers
         char specifier;
