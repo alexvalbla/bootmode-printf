@@ -131,7 +131,7 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
                 }
         }
 
-        // padd then output conversion:
+        // pad then output conversion:
         uint16_t flags = ctxt->flags;
         uint16_t field_width = ctxt->field_width;
         uint16_t precision = ctxt->precision;
@@ -164,49 +164,49 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
         }
 }
 
-static void pad_and_output_str(bm_output_ctxt *ctxt, const char *str, size_t len) {
+void output_str(bm_output_ctxt *ctxt, bm_va_list ap) {
         uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
-
-        if ((flags&FLAG_WDTH) && len < field_width) {
-                size_t padding_length = field_width-len;
-                if (flags&FLAG_LADJ) {
-                        output_buffer(ctxt, str, len);
-                        output_char_loop(ctxt, ' ', padding_length);
-                } else {
-                        output_char_loop(ctxt, ' ', padding_length);
-                        output_buffer(ctxt, str, len);
-                }
-                return;
-        }
-        output_buffer(ctxt, str, len);
-}
-
-void output_c(bm_output_ctxt *ctxt, bm_va_list ap) {
-        char c = (char)bm_va_arg(ap, int);
-        pad_and_output_str(ctxt, (const char *)&c, 1);
-}
-
-void output_s(bm_output_ctxt *ctxt, bm_va_list ap) {
-        const char *s = bm_va_arg(ap, const char *);
-        uint16_t flags = ctxt->flags;
-        uint16_t precision = ctxt->precision;
+        unsigned int field_width = ctxt->field_width;
+        unsigned int precision = ctxt->precision;
         size_t len;
-        if (s == NULL) {
-                s = "(null)";
-                len = 6;
+        const char *s;
+        char c;
+        if (ctxt->specifier == 'c') {
+                c = (char)bm_va_arg(ap, int);
+                s = &c;
+                len = 1;
         } else {
-                const char *cursor = s;
-                while (*cursor) {
-                        ++cursor;
+                // ctxt->specifier == 's'
+                s = bm_va_arg(ap, const char *);
+                if (s == NULL) {
+                        s = "(null)";
+                        len = 6;
+                } else {
+                        const char *cursor = s;
+                        while (*cursor) {
+                                ++cursor;
+                        }
+                        len = cursor-s;
                 }
-                len = cursor-s;
-        }
-        if ((flags&FLAG_PREC) && precision < len) {
-                len = precision;
+                if ((flags&FLAG_PREC) && precision < len) {
+                        // no more than 'precision' characters should be printed
+                        len = precision;
+                }
         }
 
-        pad_and_output_str(ctxt, s, len);
+        // pad and output
+        size_t padding_length = 0;
+        if (flags&FLAG_WDTH && len < field_width) {
+                padding_length = field_width-len;
+        }
+
+        if (!(flags&FLAG_LADJ)) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
+        output_buffer(ctxt, s, len);
+        if (flags&FLAG_LADJ) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
 }
 
 void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {

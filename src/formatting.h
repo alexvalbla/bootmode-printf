@@ -21,19 +21,7 @@
 
 void output_int(bm_output_ctxt *ctxt, bm_va_list ap);
 
-void output_d(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_u(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_x(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_o(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_p(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_c(bm_output_ctxt *ctxt, bm_va_list ap);
-
-void output_s(bm_output_ctxt *ctxt, bm_va_list ap);
+void output_str(bm_output_ctxt *ctxt, bm_va_list ap);
 
 void output_n(bm_output_ctxt *ctxt, bm_va_list ap);
 

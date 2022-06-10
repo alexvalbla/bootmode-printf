@@ -131,12 +131,17 @@ static int main_output_loop(bm_output_ctxt *ctxt, const char *format, bm_va_list
                                         output_fp(ctxt, ap);
                                         break;
 
-                                case 'c':
-                                        output_c(ctxt, ap);
-                                        break;
+                                // case 'c':
+                                //         output_c(ctxt, ap);
+                                //         break;
+                                //
+                                // case 's':
+                                //         output_s(ctxt, ap);
+                                //         break;
 
+                                case 'c':
                                 case 's':
-                                        output_s(ctxt, ap);
+                                        output_str(ctxt, ap);
                                         break;
 
                                 case 'n':
