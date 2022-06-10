@@ -13,10 +13,10 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
         t.f = x;
 
         if (!ARE_SAME_ENDIANNESS_INT_FLT) {
-                SWAP_BYTES(((char *)(&t.i))[0], ((char *)(&t.i))[7])
-                SWAP_BYTES(((char *)(&t.i))[1], ((char *)(&t.i))[6])
-                SWAP_BYTES(((char *)(&t.i))[2], ((char *)(&t.i))[5])
-                SWAP_BYTES(((char *)(&t.i))[3], ((char *)(&t.i))[4])
+                int l = sizeof(t.i);
+                for (int i = 0; i < l/2; i++) {
+                        SWAP_BYTES(((char *)(&t.i))[i], ((char *)(&t.i))[l-i-1])
+                }
         }
 
         *s = t.i >> 63;
@@ -53,6 +53,14 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
 fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
         longdblcst_t t;
         t.f = x;
+
+        if (!ARE_SAME_ENDIANNESS_INT_FLT) {
+                int l = sizeof(t.i);
+                for (int i = 0; i < l/2; i++) {
+                        SWAP_BYTES(((char *)(&t.i))[i], ((char *)(&t.i))[l-i-1])
+                }
+        }
+        
         *s = (t.i >> 79) & 1;
         *E = (t.i >> 64) & 0x7FFF;
         *m = (uint64_t)t.i;
