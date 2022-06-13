@@ -60,7 +60,7 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
                         SWAP_BYTES(((char *)(&t.i))[i], ((char *)(&t.i))[l-i-1])
                 }
         }
-        
+
         *s = (t.i >> 79) & 1;
         *E = (t.i >> 64) & 0x7FFF;
         *m = (uint64_t)t.i;
@@ -247,57 +247,10 @@ static inline uint64_t decimalMantissa(int64_t F, uint64_t m, int32_t E) {
 }
 
 static inline void adjust_m(int32_t *E, uint64_t *m) {
-        //we want 2^63 <= m < 2^64decimalMantissa
-        if (*m < (((uint64_t)1) << 63)) {
-                if (*m < (((uint64_t)1) << 32)) {
-                        *m <<= 32;
-                        *E -= 32;
-                }
-                if (*m < (((uint64_t)1) << 48)) {
-                        *m <<= 16;
-                        *E -= 16;
-                }
-                if (*m < (((uint64_t)1) << 56)) {
-                        *m <<= 8;
-                        *E -= 8;
-                }
-                if (*m < (((uint64_t)1) << 60)) {
-                        *m <<= 4;
-                        *E -= 4;
-                }
-                if (*m < (((uint64_t)1) << 63)) {
-                        *m <<= 2;
-                        *E -= 2;
-                }
-                if (*m < (((uint64_t)1) << 63)) {
-                        *m <<= 1;
-                        *E -= 1;
-                }
-        }
-}
-
-static inline void adjust_n_and_F(uint64_t *n, int32_t *F) {
-        //we want 10^18 <= n < 10^19
-        if (*n >= (uint64_t)10000000000000000000u) {
-                //n >= 10^19
-                int r = (*n)%10;
-                *n /= 10;
-                (*F)++;
-                if (r >= 5) {
-                        //the last digit was >= 5
-                        //the round up
-                        (*n)++;
-                        if (*n >= (uint64_t)10000000000000000000u) {
-                                //if by rounding we again have n >= 10^19
-                                //we again impose n < 10^19
-                                *n /= 10;
-                                (*F)++;
-                        }
-                }
-        } else if (*n < (uint64_t)1000000000000000000u) {
-                //n < 10^18
-                *n *= 10;
-                (*F)--;
+        // we want 2^63 <= m < 2^64
+        while (*m < (((uint64_t)1) << 63)) {
+                *m <<= 1;
+                *E -= 1;
         }
 }
 
@@ -307,7 +260,6 @@ void decimalConversion(int32_t *F, uint64_t *n, int32_t E, uint64_t m) {
                 adjust_m(&E, &m);
                 *F = decimalExponent(E);
                 *n = decimalMantissa(*F, m, E);
-                adjust_n_and_F(n, F);
         } else {
                 // m == 0 indicates that the number is zero
                 *n = 0;
