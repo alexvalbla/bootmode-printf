@@ -64,27 +64,29 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
         }
 
         // convert argument to digits:
-        char conv_buff[32];
-        int nb_digits = 0;
-        uintmax_t mask;
+        char conv_buff[45]; // 128-bit integer as octal is at most 43 character + extra '0' for %#o + '\0'
         char prefix[2];
-        char prefix_len = 0; // provisionally
+        unsigned int prefix_len = 0;
+        unsigned int nb_digits = 0;
+        uintmax_t mask;
         switch (ctxt->specifier) {
                 case 'X':
                 case 'x':
                         ctxt->base = 16;
                         if ((ctxt->flags&FLAG_ALTF) && a > 0) {
-                                prefix_len = 2;
-                                prefix[0] = '0';
-                                prefix[1] = ctxt->specifier; // either 'x' or 'X'
+                                prefix[prefix_len++] = '0';
+                                prefix[prefix_len++] = ctxt->specifier; // either 'x' or 'X'
                         }
                         break;
                 case 'o':
                         ctxt->base = 8;
+                        if (a != 0 && (ctxt->flags&FLAG_ALTF)) {
+                                // first digit must be 0
+                                conv_buff[nb_digits++] = '0';
+                        }
                         break;
                 case 'i':
                 case 'd':
-                        prefix_len = 1; // provisionally, for sign character
                         arg_sz <<= 3; // x8 to get size in bits
                         mask = ((uintmax_t)1) << (arg_sz-1); // aim at sign bit
                         if (a & mask) {
@@ -93,11 +95,11 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
                                 // ... as an integer of size uintmax_t:
                                 a |= ~(mask-1); // <- all bits after sign bit must be set to 1
                                 a = ~(a-1); // <- 2's complement for absolute value
-                                prefix[0] = '-';
+                                prefix[prefix_len++] = '-';
                         } else if (ctxt->flags&FLAG_SIGN) {
-                                prefix[0] = '+';
+                                prefix[prefix_len++] = '+';
                         } else if (ctxt->flags&FLAG_WSPC) {
-                                prefix[0] = ' ';
+                                prefix[prefix_len++] = ' ';
                         } else {
                                 prefix_len = 0; // no sign character
                         }
@@ -106,7 +108,7 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
                         ctxt->base = 10; // for 'i', 'd', and 'u'
                         break;
         }
-        nb_digits = int_fmt(ctxt, conv_buff, a);
+        nb_digits += int_fmt(ctxt, conv_buff+nb_digits, a);
 
         // postprocessing:
         if (ctxt->flags&FLAG_PREC) {
@@ -118,44 +120,29 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
                 // precision > 0 but a == 0 -> print at least 1 digit
                 conv_buff[0] = '0';
                 nb_digits += 1;
-        } else if (ctxt->specifier == 'o') {
-                if ((ctxt->flags&FLAG_ALTF) && conv_buff[0] != '0') {
-                        // first digit must be 0
-                        int n = nb_digits;
-                        while (n > 0) {
-                                conv_buff[n] = conv_buff[n-1];
-                                --n;
-                        }
-                        conv_buff[0] = '0';
-                        ++nb_digits;
-                }
         }
 
         // pad then output conversion:
         uint16_t flags = ctxt->flags;
-        uint16_t field_width = ctxt->field_width;
-        uint16_t precision = ctxt->precision;
+        unsigned int field_width = ctxt->field_width;
+        unsigned int precision = ctxt->precision;
 
-        int16_t prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
-        int16_t total_length = nb_digits + prec_padding + prefix_len;
-        int padding_length = 0;
+        unsigned int prec_padding = (nb_digits >= precision) ? 0 : precision - nb_digits;
+        unsigned int total_length = nb_digits + prec_padding + prefix_len;
+        unsigned int padding_length = 0;
         if (flags&FLAG_WDTH && total_length < field_width) {
                 padding_length = field_width - total_length;
         }
 
         if (flags&FLAG_ZERO) {
-                if (prefix_len > 0) {
-                        output_buffer(ctxt, prefix, prefix_len);
-                }
+                output_buffer(ctxt, prefix, prefix_len);
                 output_char_loop(ctxt, '0', prec_padding+padding_length);
                 output_buffer(ctxt, conv_buff, nb_digits);
         } else {
                 if (!(flags&FLAG_LADJ)) {
                         output_char_loop(ctxt, ' ', padding_length);
                 }
-                if (prefix_len > 0) {
-                        output_buffer(ctxt, prefix, prefix_len);
-                }
+                output_buffer(ctxt, prefix, prefix_len);
                 output_char_loop(ctxt, '0', prec_padding);
                 output_buffer(ctxt, conv_buff, nb_digits);
                 if (flags&FLAG_LADJ) {
@@ -238,13 +225,12 @@ void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {
 }
 
 
-//floating point formatting functions
+// floating point formatting functions
 
-static void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
-static void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
-static void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F);
-void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class);
-
+static void fp_fmt_e(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int32_t F);
+static void fp_fmt_f(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int position);
+static void fp_fmt_g(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int32_t F);
+static void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class);
 
 void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
         char s; // sign
@@ -259,22 +245,34 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
         } else {
                 class = decomposeDouble(&s, &E, &m, bm_va_arg(ap, double));
         }
-        if (!(ctxt->flags&FLAG_PREC)) {
-                // precision missing, taken as 6:
-                ctxt->precision = 6;
+        if (s != 0) {
+                // sign bit is set
+                ctxt->flags |= FLAG_NEGV;
         }
         if (class == BM_NUMBER) {
                 ctxt->base = 10;
                 decimalConversion(&F, &n, E, m);
+                if (n == 0) {
+                        // float value is 0.
+                        ctxt->flags |= FLAG_FLT0;
+                }
+                if (!(ctxt->flags&FLAG_PREC)) {
+                        // precision missing, taken as 6
+                        ctxt->precision = 6;
+                }
+                char digits[32];
+                unsigned int nb_digits = int_fmt(ctxt, digits, n);
                 switch (ctxt->specifier) {
                         case 'e':
-                                fp_fmt_e(ctxt, s, n, F);
+                                F += nb_digits-1;
+                                fp_fmt_e(ctxt, digits, nb_digits, F);
                                 break;
                         case 'f':
-                                fp_fmt_f(ctxt, s, n, F);
+                                fp_fmt_f(ctxt, digits, nb_digits, F+nb_digits);
                                 break;
                         case 'g':
-                                fp_fmt_g(ctxt, s, n, F);
+                                fp_fmt_g(ctxt, digits, nb_digits, F);
+                                // fp_fmt_g(ctxt, s, n, F);
                                 break;
                         default:
                                 break;
@@ -285,265 +283,209 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
         }
 }
 
-void fp_fmt_e(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
-        uint16_t precision = ctxt->precision;
+static void fp_fmt_e(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int32_t F) {
         uint16_t flags = ctxt->flags;
-        // adjust precision
-        if (precision > 18) {
-                precision = 18;
-        }
+        unsigned int field_width = ctxt->field_width;
+        unsigned int precision = ctxt->precision;
 
-        // sign
-        if (s) {
-                output_char(ctxt, '-');
+        char sign_char = 0;
+        if (flags&FLAG_NEGV) {
+                sign_char = '-';
         } else if (flags&FLAG_SIGN) {
-                output_char(ctxt, '+');
+                sign_char = '+';
         } else if (flags&FLAG_WSPC) {
-                output_char(ctxt, ' ');
+                sign_char = ' ';
         }
 
-        char n_array[20];
-        if (n == 0) {
-                // floating point == 0.
-                for (int i = 0; i < 19; ++i) {
-                        n_array[i] = '0';
-                }
+        unsigned int nb_digits_F;
+        char digits_F[5];
+        char F_sign_char = '+';
+        char E = (flags&FLAG_UCAS) ? 'E' : 'e';
+        if (flags&FLAG_FLT0) {
+                // f.p. is 0.
+                nb_digits = 1;
+                nb_digits_F = 1;
+                digits[0] = '0';
+                digits_F[0] = '0';
         } else {
-                // write decimal mantissa
-                // n has 19 digits (10^18 <= n < 10^19)
-                // we want 1 digit before the decimal point
-                // so we increase the decimal exponent by 18
-                int_fmt(ctxt, n_array, n);
-                F += 18;
-        }
-        output_char(ctxt, n_array[0]);
-        if (precision || (flags&FLAG_ALTF)) {
-                output_char(ctxt, '.');
-                output_buffer(ctxt, n_array+1, precision);
-        }
-
-        int32_t F_abs_val = (F < 0) ? -F : F;
-        char F_array[10];
-        int F_digits = int_fmt(ctxt, F_array, F_abs_val);
-
-        // write decimal exponent
-        char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
-        output_char(ctxt, 'e' + e_adjust);
-        if (F < 0) {
-                output_char(ctxt, '-');
-        } else {
-                output_char(ctxt, '+');
-        }
-        if (F_digits < 2) {
-                // write with at least 2 digits
-                output_char(ctxt, '0');
-                if (F_digits == 1) {
-                        output_char(ctxt, F_array[0]);
+                // f.p. is not 0. -> nb_digits > 0
+                if (F == 0) {
+                        nb_digits_F = 1;
+                        digits_F[0] = '0';
                 } else {
-                        // in other words, F == 0
-                        output_char(ctxt, '0');
+                        if (F < 0) {
+                                F_sign_char = '-';
+                                F = -F;
+                        }
+                        nb_digits_F = int_fmt(ctxt, digits_F, F);
                 }
+        }
+        // digits[0] is consumed as the first digit before decimal point
+        --nb_digits;
+
+        unsigned int digits_after_point = (precision <= nb_digits) ? precision : nb_digits;
+        unsigned int trailing_zeros;
+        if ((flags&FLAG_REM0) || precision <= nb_digits) {
+                trailing_zeros = 0;
         } else {
-                output_buffer(ctxt, F_array, F_digits);
+                trailing_zeros = precision - nb_digits;
+        }
+
+        char point = 0;
+        if ((flags&FLAG_ALTF) || digits_after_point + trailing_zeros > 0) {
+                point = '.';
+        }
+
+        if (nb_digits_F == 1) {
+                // should be printed with at least 2 digits
+                digits_F[1] = digits_F[0];
+                digits_F[0] = '0';
+                ++nb_digits_F;
+        }
+
+        // total length explanation:
+        // - 1 digits before decimal point
+        // - X digits after decimal point
+        // - Y trailing zeros
+        // - 'e' character followed by '+' or '-'
+        // - Z decimal exponent digits
+        // - maybe a sign character
+        // - maybe a decimal point
+        unsigned int total_length = 1 + digits_after_point + trailing_zeros + 2 + nb_digits_F;
+        if (sign_char) ++total_length;
+        if (point) ++total_length;
+
+        unsigned int padding_length = 0;
+        if ((flags&FLAG_WDTH) && total_length < field_width) {
+                padding_length = field_width - total_length;
+        }
+
+        if (!(flags&FLAG_LADJ)) {
+                if (flags|FLAG_ZERO) {
+                        if (sign_char) output_char(ctxt, sign_char);
+                        output_char_loop (ctxt, '0', padding_length);
+                } else {
+                        output_char_loop (ctxt, ' ', padding_length);
+                        if (sign_char) output_char(ctxt, sign_char);
+                }
+        } else if (sign_char) output_char(ctxt, sign_char);
+        output_char(ctxt, digits[0]);
+        if (point) output_char(ctxt, point);
+        output_buffer(ctxt, digits+1, digits_after_point);
+        output_char_loop(ctxt, '0', trailing_zeros);
+        output_char(ctxt, E);
+        output_char(ctxt, F_sign_char);
+        output_buffer(ctxt, digits_F, nb_digits_F);
+        if (flags&FLAG_LADJ) {
+                output_char_loop (ctxt, ' ', padding_length);
         }
 }
 
-void fp_fmt_f(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
-        uint16_t precision = ctxt->precision;
+static void fp_fmt_f(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int position) {
         uint16_t flags = ctxt->flags;
-        // adjust precision
-        if (precision > 19) {
-                precision = 19;
-        }
+        unsigned int field_width = ctxt->field_width;
+        unsigned int precision = ctxt->precision;
 
-        // sign
-        if (s) {
-                output_char(ctxt, '-');
+        char sign_char = 0;
+        if (flags&FLAG_NEGV) {
+                sign_char = '-';
         } else if (flags&FLAG_SIGN) {
-                output_char(ctxt, '+');
+                sign_char = '+';
         } else if (flags&FLAG_WSPC) {
-                output_char(ctxt, ' ');
+                sign_char = ' ';
         }
 
-        int digits_before_point; // decimal point
-        char n_array[20];
-        if (n == 0) {
-                // floating point == 0.
-                output_char(ctxt, '0');
-                if (precision > 0) {
-                        output_char(ctxt, '.');
-                        output_char_loop(ctxt, '0', precision);
-                } else if (flags&(FLAG_ALTF)) {
-                        output_char(ctxt, '.');
-                }
-                return;
-        } else {
-                digits_before_point = F+19; // n has 19 decimals
-                int_fmt(ctxt, n_array, n);
+        if (flags&FLAG_FLT0) {
+                nb_digits = 0;
+                position = 0;
         }
 
-        if (digits_before_point >= 19) {
-                output_buffer(ctxt, n_array, 19);
-                output_char_loop(ctxt, '0', digits_before_point-19);
-                if (precision > 0 || flags&FLAG_ALTF) {
-                        output_char(ctxt, '.');
-                        output_char_loop(ctxt, '0', precision);
+        unsigned int digits_before_point;
+        unsigned int zeros_before_point;
+        unsigned int zeros_after_point;
+        unsigned int digits_after_point;
+        unsigned int trailing_zeros;
+
+        if (position > 0) {
+                if (position >= nb_digits) {
+                        digits_before_point = nb_digits;
+                        zeros_before_point = position - nb_digits;
+                        nb_digits = 0; // all are consumed before decimal point
+                } else {
+                        digits_before_point = position;
+                        zeros_before_point = 0;
+                        nb_digits -= position;
                 }
-        } else if (digits_before_point > 0) {
-                output_buffer(ctxt, n_array, digits_before_point);
-                if (precision > 0 || flags&FLAG_ALTF) {
-                        output_char(ctxt, '.');
-                        int digits_left = 19-digits_before_point;
-                        if (digits_left >= precision) {
-                                output_buffer(ctxt, n_array+digits_before_point, precision);
-                        } else {
-                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
-                                output_char_loop(ctxt, '0', precision-digits_left);
-                        }
-                }
+                zeros_after_point = 0;
+                digits_after_point = (precision >= nb_digits) ? nb_digits : precision;
         } else {
-                output_char(ctxt, '0');
-                if (precision > 0) {
-                        output_char(ctxt, '.');
-                        // remember that digits_before_point <= 0
-                        int zeros_after_point = -digits_before_point;
-                        if (zeros_after_point >= precision) {
-                                output_char_loop(ctxt, '0', precision);
-                        } else {
-                                output_char_loop(ctxt, '0', zeros_after_point);
-                                output_buffer(ctxt, n_array, precision-zeros_after_point);
-                        }
-                } else if (flags&FLAG_ALTF) {
-                        output_char(ctxt, '.');
+                // position <= 0
+                unsigned int neg_pos = -position;
+                digits_before_point = 0;
+                zeros_before_point = 1;
+                zeros_after_point = (neg_pos >= precision) ? (flags&FLAG_REM0 ? 0 : precision) : neg_pos;
+                digits_after_point = (neg_pos >= precision) ? 0 : (nb_digits >= precision - zeros_after_point) ? precision - zeros_after_point : nb_digits;
+        }
+        trailing_zeros = (flags&FLAG_REM0) ? 0 : precision - zeros_after_point - digits_after_point;
+
+        char point = 0;
+        if ((flags&FLAG_ALTF) || (zeros_after_point|digits_after_point|trailing_zeros) != 0) {
+                point = '.';
+        }
+
+        unsigned int total_length = digits_before_point
+                                  + zeros_before_point
+                                  + zeros_after_point
+                                  + digits_after_point
+                                  + trailing_zeros;
+        if (sign_char) ++total_length;
+        if (point) ++total_length;
+
+        unsigned int padding_length = 0;
+        if ((flags&FLAG_WDTH) && total_length < field_width) {
+                padding_length = field_width - total_length;
+        }
+
+        if (!(flags&FLAG_LADJ)) {
+                if (flags|FLAG_ZERO) {
+                        if (sign_char) output_char(ctxt, sign_char);
+                        output_char_loop (ctxt, '0', padding_length);
+                } else {
+                        output_char_loop (ctxt, ' ', padding_length);
+                        if (sign_char) output_char(ctxt, sign_char);
                 }
+        } else if (sign_char) output_char(ctxt, sign_char);
+
+        output_buffer(ctxt, digits, digits_before_point);
+        output_char_loop(ctxt, '0', zeros_before_point);
+        if (point) output_char(ctxt, point);
+        output_char_loop(ctxt, '0', zeros_after_point);
+        output_buffer(ctxt, &digits[digits_before_point], digits_after_point);
+        output_char_loop(ctxt, '0', trailing_zeros);
+        if (flags&FLAG_LADJ) {
+                output_char_loop (ctxt, ' ', padding_length);
         }
 }
 
-void fp_fmt_g(bm_output_ctxt *ctxt, char s, uint64_t n, int32_t F) {
-        int32_t sig_digits = ctxt->precision;
-        uint16_t flags = ctxt->flags;
-        if (sig_digits > 19) {
-                sig_digits = 19;
-        } else if (sig_digits == 0) {
-                // always at least 1
-                sig_digits = 1;
+static void fp_fmt_g(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int32_t F) {
+        if (ctxt->precision == 0) ctxt->precision = 1;
+        if (!(ctxt->flags&FLAG_ALTF)) {
+                // remove trailing zeros
+                ctxt->flags |= FLAG_REM0;
         }
-
-        // sign
-        if (s) {
-                output_char(ctxt, '-');
-        } else if (flags&FLAG_SIGN) {
-                output_char(ctxt, '+');
-        } else if (flags&FLAG_WSPC) {
-                output_char(ctxt, ' ');
-        }
-
-        char n_array[20];
-        int nb_digits = int_fmt(ctxt, n_array, n);
-        if (nb_digits == 0) {
-                // floating point is zero
-                output_char(ctxt, '0');
-                --sig_digits;
-                if (flags&(FLAG_ALTF)) {
-                        output_char(ctxt, '.');
-                        output_char_loop(ctxt, '0', sig_digits);
-                }
-                return;
-        }
-
-        int32_t exp_e = F+18;
-        if (exp_e < -4 || exp_e >= sig_digits) {
-                // %e-style conversion
-                output_char(ctxt, n_array[0]);
-                --sig_digits;
-                int cur = sig_digits;
-                if (!(flags&FLAG_ALTF)) {
-                        // remove trailing zeros
-                        while (n_array[cur] == '0') --cur;
-                        if (cur > 0) {
-                                output_char(ctxt, '.');
-                        }
-                } else {
-                        output_char(ctxt, '.');
-                }
-                output_buffer(ctxt, n_array+1, cur);
-
-                // write decimal exponent
-                int32_t e_abs = (exp_e < 0) ? -exp_e : exp_e;
-                char e_array[10];
-                int e_digits = int_fmt(ctxt, e_array, e_abs);
-                char e_adjust = (flags|FLAG_UCAS) ? 'A' - 'a' : 0; // conditionally set to upper case
-                output_char(ctxt, 'e' + e_adjust);
-                if (exp_e < 0) {
-                        output_char(ctxt, '-');
-                } else {
-                        output_char(ctxt, '+');
-                }
-                if (e_digits < 2) {
-                        // write with at least 2 digits
-                        output_char(ctxt, '0');
-                        if (e_digits == 1) {
-                                output_char(ctxt, e_array[0]);
-                        } else {
-                                // in other words, F == 0
-                                output_char(ctxt, '0');
-                        }
-                } else {
-                        output_buffer(ctxt, e_array, e_digits);
-                }
-                return;
-        }
-
-        // %f-style conversion
-        int digits_before_point = F+19; // digits before the decimal point
-        if (digits_before_point >= 19) {
-                output_buffer(ctxt, n_array, 19);
-                output_char_loop(ctxt, '0', digits_before_point-19);
-                if (flags&FLAG_ALTF) {
-                        output_char(ctxt, '.');
-                }
-        } else if (digits_before_point > 0) {
-                int digits_left = nb_digits-digits_before_point;
-                sig_digits -= digits_before_point;
-                output_buffer(ctxt, n_array, digits_before_point);
-                if (flags&FLAG_ALTF) {
-                        output_char(ctxt, '.');
-                        if (sig_digits <= 0) {
-                                return; // already printed enough significant digits
-                        }
-                        if (digits_left >= sig_digits) {
-                                output_buffer(ctxt, n_array+digits_before_point, sig_digits);
-                        } else {
-                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
-                                output_char_loop(ctxt, '0', sig_digits-digits_left);
-                        }
-                } else {
-                        if (sig_digits <= 0) {
-                                return; // already printed enough significant digits
-                        }
-                        // remove trailing zeros
-                        int cur = nb_digits-1;
-                        while (n_array[cur] == '0' && cur-- >= digits_before_point) {
-                                --digits_left;
-                        }
-                        if (digits_left > 0) {
-                                output_char(ctxt, '.');
-                        }
-                        if (digits_left >= sig_digits) {
-                                output_buffer(ctxt, n_array+digits_before_point, sig_digits);
-                        } else {
-                                output_buffer(ctxt, n_array+digits_before_point, digits_left);
-                        }
-                }
+        int32_t exp_e = F + (int)nb_digits -1;
+        if (ctxt->flags&FLAG_FLT0 || (exp_e >= -4 && exp_e < (int)ctxt->precision)) {
+                int position = exp_e + 1;
+                if (position > 0) ctxt->precision -= position;
+                else if (ctxt->flags&FLAG_FLT0) --(ctxt->precision);
+                fp_fmt_f(ctxt, digits, nb_digits, position);
         } else {
-                output_char(ctxt, '0');
-                output_char(ctxt, '.');
-                output_char_loop(ctxt, '0', (size_t)(-digits_before_point));
-                output_buffer(ctxt, n_array, sig_digits);
+                --(ctxt->precision);
+                fp_fmt_e(ctxt, digits, nb_digits, exp_e);
         }
 }
 
-void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
+static void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
         uint16_t flags = ctxt->flags;
         char buff[3] = {'n', 'a', 'n'};
         if (class != BM_NAN) {
