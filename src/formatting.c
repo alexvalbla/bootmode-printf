@@ -272,7 +272,6 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
                                 break;
                         case 'g':
                                 fp_fmt_g(ctxt, digits, nb_digits, F);
-                                // fp_fmt_g(ctxt, s, n, F);
                                 break;
                         default:
                                 break;
@@ -487,27 +486,44 @@ static void fp_fmt_g(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits,
 
 static void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class) {
         uint16_t flags = ctxt->flags;
-        char buff[3] = {'n', 'a', 'n'};
+        char buff[4] = {'\0', 'n', 'a', 'n'};
+        unsigned int len = sizeof(buff);
+        char *buff_ptr = &buff[0];
         if (class != BM_NAN) {
-                buff[0] = 'i';
-                buff[1] = 'n';
-                buff[2] = 'f';
-                if (class == BM_POS_INF) {
-                        if (flags&FLAG_SIGN) {
-                                output_char(ctxt, '+');
-                        } else if (flags&FLAG_WSPC) {
-                                output_char(ctxt, ' ');
-                        }
+                buff[1] = 'i';
+                buff[2] = 'n';
+                buff[3] = 'f';
+                if (class == BM_NEG_INF) {
+                        buff[0] = '-';
+                } else if (flags&FLAG_SIGN) {
+                        buff[0] = '+';
+                } else if (flags&FLAG_WSPC) {
+                        buff[0] = ' ';
                 } else {
-                        // class == BM_NEG_INF
-                        output_char(ctxt, '-');
+                        ++buff_ptr;
+                        --len;
                 }
+        } else {
+                ++buff_ptr;
+                --len;
         }
         if (ctxt->flags&FLAG_UCAS) {
                 char maj = 'A' - 'a'; // upper case adjustement
-                buff[0] += maj;
                 buff[1] += maj;
                 buff[2] += maj;
+                buff[3] += maj;
         }
-        output_buffer(ctxt, buff, 3);
+        unsigned int padding_length = 0;
+        if ((flags&FLAG_WDTH) && len < ctxt->field_width) {
+                padding_length = ctxt->field_width - len;
+        }
+
+        // output with padding
+        if (!(flags&FLAG_LADJ)) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
+        output_buffer(ctxt, buff_ptr, len);
+        if (flags&FLAG_LADJ) {
+                output_char_loop(ctxt, ' ', padding_length);
+        }
 }
