@@ -10,12 +10,12 @@
         (b2) ^= (b1);\
         (b1) ^= (b2);
 
-typedef union{
+typedef union {
   double f;
   uint64_t i;
 } dblcst_t;
 
-typedef union{
+typedef union {
   long double f;
   __uint128_t i;
 } longdblcst_t;
