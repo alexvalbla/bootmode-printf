@@ -17,7 +17,7 @@ static void str_rev(char *s, size_t size) {
 static int int_fmt(bm_output_ctxt *ctxt, char *conv_buff, uintmax_t a) {
         int i = 0;
         while (a > 0) {
-                int digit = a%ctxt->base;
+                int digit = a % ctxt->base;
                 conv_buff[i++] = (digit < 10) ? digit+'0' : (ctxt->flags&FLAG_UCAS) ? digit-10+'A' : digit-10+'a';
                 a /= ctxt->base;
         }
@@ -117,7 +117,7 @@ void output_int(bm_output_ctxt *ctxt, bm_va_list ap) {
                 ctxt->precision = 1; // precision unspecified, taken to be 1
         }
         if (a == 0 && ctxt->precision > 0) {
-                // precision > 0 but a == 0 -> print at least 1 digit
+                // a == 0 but precision > 0 -> print at least 1 digit
                 conv_buff[0] = '0';
                 nb_digits += 1;
         }
@@ -201,24 +201,19 @@ void output_n(bm_output_ctxt *ctxt, bm_va_list ap) {
         if (lmods[0] == 'l' && lmods[1] == '\0') {
                 long *n = bm_va_arg(ap, long*);
                 *n = ctxt->total_written;
-        }
-        else if (lmods[0] == 'l' && lmods[1] == 'l') {
+        } else if (lmods[0] == 'l' && lmods[1] == 'l') {
                 long long *n = bm_va_arg(ap, long long*);
                 *n = ctxt->total_written;
-        }
-        else if (lmods[0] == 'h' && lmods[1] == '\0') {
+        } else if (lmods[0] == 'h' && lmods[1] == '\0') {
                 short *n = (short*)bm_va_arg(ap, int*);
                 *n = ctxt->total_written;
-        }
-        else if (lmods[0] == 'h' && lmods[1] == 'h') {
+        } else if (lmods[0] == 'h' && lmods[1] == 'h') {
                 char *n = (char*)bm_va_arg(ap, int*);
                 *n = ctxt->total_written;
-        }
-        else if (lmods[0] == 'z' && lmods[1] == '\0') {
+        } else if (lmods[0] == 'z' && lmods[1] == '\0') {
                 size_t *n = bm_va_arg(ap, size_t*);
                 *n = ctxt->total_written;
-        }
-        else {
+        } else {
                 int *n = bm_va_arg(ap, int*);
                 *n = ctxt->total_written;
         }
@@ -231,6 +226,30 @@ static void fp_fmt_e(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits,
 static void fp_fmt_f(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int position);
 static void fp_fmt_g(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits, int32_t F);
 static void fp_special_case(bm_output_ctxt *ctxt, fpclass_t class);
+
+static int round_decimal_digits(char *digits, unsigned int *nb_digits, int rounding_pos) {
+        if (rounding_pos < 0 || *nb_digits == 0) return 0; // no rounding takes place
+        if (rounding_pos >= *nb_digits) {
+                while (digits[(*nb_digits)-1] == '0') {
+                        // remove trailing zeros
+                        --(*nb_digits);
+                }
+        } else {
+                if (digits[rounding_pos] >= '5') {
+                        *nb_digits = rounding_pos + 1;
+                        do {
+                                if (rounding_pos == 0) {
+                                        digits[0] = '1';
+                                        return 1; // adjust either exponent or decimal point position
+                                }
+                                --(*nb_digits);
+                                --rounding_pos;
+                                ++digits[rounding_pos];
+                        } while (digits[rounding_pos] > '9');
+                }
+        }
+        return 0;
+}
 
 void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
         char s; // sign
@@ -262,13 +281,16 @@ void output_fp(bm_output_ctxt *ctxt, bm_va_list ap) {
                 }
                 char digits[32];
                 unsigned int nb_digits = int_fmt(ctxt, digits, n);
+                int position = F + nb_digits;
                 switch (ctxt->specifier) {
                         case 'e':
                                 F += nb_digits-1;
+                                F += round_decimal_digits(digits, &nb_digits, ctxt->precision+1);
                                 fp_fmt_e(ctxt, digits, nb_digits, F);
                                 break;
                         case 'f':
-                                fp_fmt_f(ctxt, digits, nb_digits, F+nb_digits);
+                                position += round_decimal_digits(digits, &nb_digits, position);
+                                fp_fmt_f(ctxt, digits, nb_digits, position);
                                 break;
                         case 'g':
                                 fp_fmt_g(ctxt, digits, nb_digits, F);
