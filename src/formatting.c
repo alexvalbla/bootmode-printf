@@ -495,8 +495,10 @@ static void fp_fmt_g(bm_output_ctxt *ctxt, char *digits, unsigned int nb_digits,
                 ctxt->flags |= FLAG_REM0;
         }
         int32_t exp_e = F + (int)nb_digits -1;
+        F += round_decimal_digits(digits, &nb_digits, ctxt->precision);
+        int position = exp_e + 1;
+
         if (ctxt->flags&FLAG_FLT0 || (exp_e >= -4 && exp_e < (int)ctxt->precision)) {
-                int position = exp_e + 1;
                 if (position > 0) ctxt->precision -= position;
                 else if (ctxt->flags&FLAG_FLT0) --(ctxt->precision);
                 fp_fmt_f(ctxt, digits, nb_digits, position);
