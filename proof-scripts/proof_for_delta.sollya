@@ -9,8 +9,8 @@ Fmin = -5120;
 Fmax = 4913;
 err = 0;
 
-for F from Fmin to Fmax do{
-	if(delta_1(F) != delta_2(F)) then err = 1;
+for F from Fmin to Fmax do {
+	if (delta_1(F) != delta_2(F)) then err = 1;
 };
 
 print("error = ", err);

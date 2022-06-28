@@ -3,29 +3,29 @@ prec = 2000;
 verbosity = 0;
 
 delta = floor(-x*log2(5));
-T1 = 5^(-256*x) * 2^(126 -delta(256*x));
-T2 = 5^-x * 2^(126 -delta(x));
+T1 = 5^(-256*x) * 2^(126 - delta(256*x));
+T2 = 5^-x * 2^(126 - delta(x));
 
 Fmin = -4950;
 Fmax = 4913;
-max_t_bis = 0;
-min_t_bis = 2^129;
+max_t = 0;
+min_t = 2^128;
 
-for F from Fmin to Fmax do{
-  Fh = floor(F*(2^(-8)));
+for F from Fmin to Fmax do {
+  Fh = floor(F*(2^-8));
   Fl = F-256*Fh;
 
-  t1 = floor(T1(Fh)+0.5);
-  t2 = floor(T2(Fl)+0.5);
-  tau = 2 -delta(F) +delta(256*Fh) +delta(Fl);
+  t1 = floor(T1(Fh) + 0.5);
+  t2 = floor(T2(Fl) + 0.5);
+  tau = 2 - delta(F) + delta(256*Fh) + delta(Fl);
 
-  t_bis = floor(t1*t2*2^(-128+tau));
+  t = floor(t1 * t2 * 2^(-128+tau));
 
-  if(min_t_bis > t_bis) then min_t_bis = t_bis;
-  if(max_t_bis < t_bis) then max_t_bis = t_bis;
+  if (min_t > t) then min_t = t;
+  if (max_t < t) then max_t = t;
 };
 
-min_log = floor(log2(min_t_bis));
-max_log = floor(log2(max_t_bis));
-print("min_log = ",min_log);
-print("max_log = ",max_log);
+min_log = floor(log2(min_t));
+max_log = floor(log2(max_t));
+print("min_log = ", min_log);
+print("max_log = ", max_log);

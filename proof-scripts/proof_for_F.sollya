@@ -1,0 +1,16 @@
+
+prec = 2000;
+verbosity = 0;
+
+Emax = 16320;
+Emin = -16508;
+
+F_1 = floor(x*log10(2)) + 1;
+F_2 = floor(x * floor(2^40*log10(2)) * 2^-40) + 1;
+err = 0;
+
+for E from Emin to Emax do {
+        if (F_1(E) != F_2(E)) then err = 1;
+};
+
+print("error = ", err);
