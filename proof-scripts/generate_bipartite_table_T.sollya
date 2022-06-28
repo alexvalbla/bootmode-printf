@@ -1,0 +1,57 @@
+
+prec = 2000;
+verbosity = 0;
+rationalmode = on!;
+
+delta = floor(-x*log2(5));
+T1 = 5^(-256*x) * 2^(126 - delta(256*x));
+T2 = 5^-x * 2^(126 - delta(x));
+
+fd = "table_t1.h";
+
+write("#include <stdint.h>\n") > fd;
+write("#define FH_BIAS (20)\n\n\n") >> fd;
+
+write("uint64_t t1_high[] = {\n") >> fd;
+for Fh from -20 to 19 do {
+        t1 = floor(T1(Fh) + 0.5);
+        t1_h = floor(t1 * 2^-64);
+        write("\t", t1_h, "u") >> fd;
+        if (Fh != 19) then write(",") >> fd;
+        write("\n") >> fd;
+};
+write("};\n\n") >> fd;
+
+write("uint64_t t1_low[] = {\n") >> fd;
+for Fh from -20 to 19 do {
+        t1 = floor(T1(Fh) + 0.5);
+        t1_h = floor(t1 * 2^-64);
+        t1_l = t1 - t1_h*2^64;
+        write("\t", t1_l, "u") >> fd;
+        if (Fh != 19) then write(",") >> fd;
+        write("\n") >> fd;
+};
+write("};\n\n") >> fd;
+
+
+
+write("uint64_t t2_high[] = {\n") >> fd;
+for Fl from 0 to 255 do {
+        t2 = floor(T2(Fl) + 0.5);
+        t2_h = floor(t2 * 2^-64);
+        write("\t", t2_h, "u") >> fd;
+        if (Fh != 255) then write(",") >> fd;
+        write("\n") >> fd;
+};
+write("};\n\n") >> fd;
+
+write("uint64_t t2_low[] = {\n") >> fd;
+for Fl from 0 to 255 do {
+        t2 = floor(T2(Fl) + 0.5);
+        t2_h = floor(t2 * 2^-64);
+        t2_l = t2 - t2_h*2^64;
+        write("\t", t2_l, "u") >> fd;
+        if (Fl != 255) then write(",") >> fd;
+        write("\n") >> fd;
+};
+write("};\n\n") >> fd;
