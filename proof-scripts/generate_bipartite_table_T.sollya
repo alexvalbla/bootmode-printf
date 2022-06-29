@@ -9,7 +9,10 @@ T2 = 5^-x * 2^(126 - delta(x));
 
 fd = "bipartite_t.h";
 
-write("#include <stdint.h>\n") > fd;
+write("#ifndef BIPARTITE_T\n") > fd;
+write("#define BIPARTITE_T\n\n") >> fd;
+
+write("#include <stdint.h>\n") >> fd;
 write("#define FH_BIAS (20)\n\n\n") >> fd;
 
 write("uint64_t t1_high[] = {\n") >> fd;
@@ -55,3 +58,5 @@ for Fl from 0 to 255 do {
         write("\n") >> fd;
 };
 write("};\n\n") >> fd;
+
+write("#endif // bipartite_t.h\n") >> fd;

@@ -1,3 +1,6 @@
+#ifndef BIPARTITE_T
+#define BIPARTITE_T
+
 #include <stdint.h>
 #define FH_BIAS (20)
 
@@ -606,3 +609,4 @@ uint64_t t2_low[] = {
 	4366990623704421349u
 };
 
+#endif // bipartite_t.h
