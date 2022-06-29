@@ -7,7 +7,7 @@
 #include <stdint.h>
 // check for (unsigned) 128-bit integers:
 #ifndef __SIZEOF_INT128__
-        #error "__uint128_t not defined"
+        #error "'__uint128' and 'unsigned __int128' not defined"
 #endif
 
 

@@ -17,7 +17,7 @@ typedef union {
 
 typedef union {
   long double f;
-  __uint128_t i;
+  unsigned __int128 i;
 } longdblcst_t;
 
 typedef enum {BM_NUMBER, BM_NAN, BM_POS_INF, BM_NEG_INF} fpclass_t;

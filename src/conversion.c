@@ -23,23 +23,23 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
         *m = t.i & ((uint64_t)0xFFFFFFFFFFFFF);
 
         if (*E != 2047) {
-                //x is a BM_NUMBER
+                // x is a BM_NUMBER
                 if (*E != 0) {
-                        //x is normalized
+                        // x is normalized
                         *E = *E - 1023 - 52;
-                        *m = *m + (((uint64_t)1)<<52); //implicit 1
+                        *m = *m + (((uint64_t)1) << 52); //implicit 1
                 } else {
-                        //binary exponent is zero: x is denormalized or zero
+                        // binary exponent is zero: x is denormalized or zero
                         if (m != 0) {
                                 *E = 1 - 1023 - 52;
                         }
-                        //else *E == 0 and m == 0: zero
+                        // else *E == 0 and m == 0: zero
                 }
                 return BM_NUMBER;
         } else {
-                //exponent == 2047: all ones
+                // exponent == 2047: all ones
                 if (!(*m)) {
-                        //mantissa is zero: infinity
+                        // mantissa is zero: infinity
                         if (*s) {
                                 return BM_NEG_INF;
                         }
@@ -65,46 +65,46 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
         *m = (uint64_t)t.i;
 
         if (*E != 32767) {
-                //x is a BM_NUMBER
+                // x is a BM_NUMBER
                 if (*E != 0) {
-                        //x is normalized
+                        // x is normalized
                         *E = *E - 16383 - 63;
                 } else {
-                        //binary exponent is zero: x is denormalized or zero
+                        // binary exponent is zero: x is denormalized or zero
                         if (m != 0) {
                                 *E = 1 - 16383 - 63;
                         }
-                        //else *E == 0 and m == 0: zero
+                        // else *E == 0 and m == 0: zero
                 }
                 return BM_NUMBER;
         } else {
-                //exponent == 32767: all ones
+                // exponent == 32767: all ones
                 if ((*m >> 62) == 0) {
-                        //case bits 63 and 62 are 00
+                        // case bits 63 and 62 are 00
                         if (!(*m)) {
-                                //case all other mantissa bits are also 0, means infinity
+                                // case all other mantissa bits are also 0, means infinity
                                 if (*s) {
                                         return BM_NEG_INF;
                                 }
                                 return BM_POS_INF;
                         }
-                        return BM_NAN;//case not all other mantissa bits are 0
+                        return BM_NAN; // case not all other mantissa bits are 0
                 } else if ((*m >> 62) == 1) {
-                        //case bits 63 and 62 are 01
+                        // case bits 63 and 62 are 01
                         return BM_NAN;
                 } else if ((*m >> 62) == 2) {
-                        //case bits 63 and 62 are 10
+                        // case bits 63 and 62 are 10
                         if ((*m << 2) == 0) {
-                                //case all other mantissa bits are also 0, means infinity
+                                // case all other mantissa bits are also 0, means infinity
                                 if (*s) {
                                         return BM_NEG_INF;
                                 }
                                 return BM_POS_INF;
                         }
-                        return BM_NAN;//case other mantissa bits are not all 0
+                        return BM_NAN; // case other mantissa bits are not all 0
                 } else {
-                        //case bits 63 and 62 are 11
-                        return BM_NAN;//Actually floating point indefinite or NaN, will be interpreted as NaN
+                        // case bits 63 and 62 are 11
+                        return BM_NAN; // Actually floating point indefinite or NaN, will be interpreted as NaN
                 }
         }
 }
@@ -112,19 +112,19 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
 
 
 
-//functions to compute the decimal exponent and mantissa
-//given the binary exponent and mantissa
+// functions to compute the decimal exponent and mantissa
+// given the binary exponent and mantissa
 
 static inline int64_t decimalExponent(int32_t E) {
         // 13 bits max
-        int64_t constantLog = 330985980541; //floor(2^40*log10(2))
+        int64_t constantLog = 330985980541; // floor(2^40*log10(2))
         return (((int64_t)E * constantLog) >> 40)+1;
 }
 
 static inline int32_t Delta(int64_t F) {
-        // = floor(log2(5^(-F))), 14 bits max
-        uint64_t constantLog = 2552986939188; //floor(log2(5)*2^40)
-        return (int32_t)(((__int128_t)(-F)*constantLog) >> 40);
+        // == floor(log2(5^(-F))), 14 bits max
+        uint64_t constantLog = 2552986939188; // floor(log2(5)*2^40)
+        return (int32_t)(((__int128)(-F)*constantLog) >> 40);
 }
 
 static inline int64_t Sigma(int32_t E, int64_t F, int32_t delta) {
@@ -158,14 +158,14 @@ static inline void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL) {
         uint64_t t2H = t2_high[Fl];
         uint64_t t2L = t2_low[Fl];
 
-        __uint128_t TL = (__uint128_t)t2L*t1L;
-        __uint128_t TM1 = (__uint128_t)t1H*t2L;
-        __uint128_t TM2 = (__uint128_t)t1L*t2H;
-        __uint128_t TH = (__uint128_t)t2H*t1H;
+        unsigned __int128 TL = (unsigned __int128)t2L*t1L;
+        unsigned __int128 TM1 = (unsigned __int128)t1H*t2L;
+        unsigned __int128 TM2 = (unsigned __int128)t1L*t2H;
+        unsigned __int128 TH = (unsigned __int128)t2H*t1H;
 
 
-        __uint128_t th, tm1, tm2;
-        __uint128_t carry;
+        unsigned __int128 th, tm1, tm2;
+        unsigned __int128 carry;
         uint64_t MASK_L64 = 0xFFFFFFFFFFFFFFFF; // for 64 low-order bits
 
         tm1 = (TM1 & MASK_L64) + (TM2 & MASK_L64) + (TL >> 64);
@@ -192,24 +192,24 @@ static inline void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL) {
         *tL = (uint64_t)tm2;
 }
 
-static inline void multiply_mt(int64_t F, uint64_t m, __uint128_t *nH, __uint128_t *nM, __uint128_t *nL) {
+static inline void multiply_mt(int64_t F, uint64_t m, unsigned __int128 *nH, unsigned __int128 *nM, unsigned __int128 *nL) {
         // returns m*t
-        __uint128_t cin;
+        unsigned __int128 cin;
         uint64_t tH, tL;
 
         bipartiteT(F, &tH, &tL);
 
-        *nL = (__uint128_t)m*tL;
-        *nM = (__uint128_t)m*tH;
+        *nL = (unsigned __int128)m*tL;
+        *nM = (unsigned __int128)m*tH;
 
-        *nH = *nM>>64;
-        *nM &= ((__uint128_t)1<<64)-1;// passing on 64 highest bits to nH
-        *nM += *nL>>64;
-        *nL &= ((__uint128_t)1<<64)-1;// passing on 64 highest bits to nM
+        *nH = *nM >> 64;
+        *nM &= ((unsigned __int128)1 << 64)-1; // passing on 64 highest bits to nH
+        *nM += *nL >> 64;
+        *nL &= ((unsigned __int128)1 << 64)-1; // passing on 64 highest bits to nM
 
-        cin = *nM>>64;
+        cin = *nM >> 64;
         *nH += cin;
-        *nM -= cin<<64;
+        *nM -= cin << 64;
 }
 
 
@@ -217,15 +217,15 @@ static inline uint64_t decimalMantissa(int64_t F, uint64_t m, int32_t E) {
         int sigma;
         uint32_t shift;
 
-        sigma = Sigma(E,F,Delta(F)); //-130<= sigma<= -127
+        sigma = Sigma(E,F,Delta(F)); // -130 <= sigma <= -127
 
         shift = (uint32_t)(-sigma);
-        __uint128_t binary = ((__uint128_t)1) << (shift-65);
-        __uint128_t nH, nM, nL, cin;
+        unsigned __int128 binary = ((unsigned __int128)1) << (shift-65);
+        unsigned __int128 nH, nM, nL, cin;
 
         multiply_mt(F, m, &nH, &nM, &nL);
         nM += binary;
-        cin = nM>>64;
+        cin = nM >> 64;
         nH += cin;
 
         if (shift == 127) {
