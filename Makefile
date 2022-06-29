@@ -16,6 +16,8 @@ LIB_BASE_NAME=bmprint
 LIB=$(LIBDIR)/lib$(LIB_BASE_NAME).a
 HEADER=$(LIBDIR)/$(LIB_BASE_NAME).h
 
+.PHONY: all release test clean clobber
+
 all: $(LIB)
 
 release: CFLAGS=-Wall -Os -DNDEBUG
