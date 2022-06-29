@@ -77,8 +77,7 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
                         //else *E == 0 and m == 0: zero
                 }
                 return BM_NUMBER;
-        }
-        else {
+        } else {
                 //exponent == 32767: all ones
                 if ((*m >> 62) == 0) {
                         //case bits 63 and 62 are 00
@@ -90,14 +89,10 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
                                 return BM_POS_INF;
                         }
                         return BM_NAN;//case not all other mantissa bits are 0
-                }
-
-                else if ((*m >> 62) == 1) {
+                } else if ((*m >> 62) == 1) {
                         //case bits 63 and 62 are 01
                         return BM_NAN;
-                }
-
-                else if ((*m >> 62) == 2) {
+                } else if ((*m >> 62) == 2) {
                         //case bits 63 and 62 are 10
                         if ((*m << 2) == 0) {
                                 //case all other mantissa bits are also 0, means infinity
@@ -107,9 +102,7 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
                                 return BM_POS_INF;
                         }
                         return BM_NAN;//case other mantissa bits are not all 0
-                }
-
-                else {
+                } else {
                         //case bits 63 and 62 are 11
                         return BM_NAN;//Actually floating point indefinite or NaN, will be interpreted as NaN
                 }
@@ -194,7 +187,7 @@ static inline void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL) {
         tm2 -= carry << 64;
         th += carry;
 
-        //t = tH*2^(64)+tL
+        // t = tH*2^(64)+tL
         *tH = (uint64_t)th;
         *tL = (uint64_t)tm2;
 }
