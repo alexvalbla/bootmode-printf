@@ -1,7 +1,6 @@
 #include "conversion.h"
 #include "print.h"
-#include "tableT1.h"
-#include "tableT2.h"
+#include "bipartite_t.h"
 
 
 
@@ -161,10 +160,10 @@ static inline void bipartiteT(int64_t F, uint64_t *tH, uint64_t *tL) {
                 }
         }
 
-        uint64_t t1H = t1High[Fh+Fhbias];
-        uint64_t t1L = t1Low[Fh+Fhbias];
-        uint64_t t2H = t2High[Fl];
-        uint64_t t2L = t2Low[Fl];
+        uint64_t t1H = t1_high[Fh+FH_BIAS];
+        uint64_t t1L = t1_low[Fh+FH_BIAS];
+        uint64_t t2H = t2_high[Fl];
+        uint64_t t2L = t2_low[Fl];
 
         __uint128_t TL = (__uint128_t)t2L*t1L;
         __uint128_t TM1 = (__uint128_t)t1H*t2L;
