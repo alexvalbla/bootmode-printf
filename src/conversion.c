@@ -79,33 +79,14 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
                 return BM_NUMBER;
         } else {
                 // exponent == 32767: all ones
-                if ((*m >> 62) == 0) {
-                        // case bits 63 and 62 are 00
-                        if (!(*m)) {
-                                // case all other mantissa bits are also 0, means infinity
-                                if (*s) {
-                                        return BM_NEG_INF;
-                                }
-                                return BM_POS_INF;
+                if ((*m & (uint64_t)0x3FFFFFFFFFFFFFFF) == 0) {
+                        // all 63 lower mantissa bits are 0
+                        if (*s) {
+                                return BM_NEG_INF;
                         }
-                        return BM_NAN; // case not all other mantissa bits are 0
-                } else if ((*m >> 62) == 1) {
-                        // case bits 63 and 62 are 01
-                        return BM_NAN;
-                } else if ((*m >> 62) == 2) {
-                        // case bits 63 and 62 are 10
-                        if ((*m << 2) == 0) {
-                                // case all other mantissa bits are also 0, means infinity
-                                if (*s) {
-                                        return BM_NEG_INF;
-                                }
-                                return BM_POS_INF;
-                        }
-                        return BM_NAN; // case other mantissa bits are not all 0
-                } else {
-                        // case bits 63 and 62 are 11
-                        return BM_NAN; // Actually floating point indefinite or NaN, will be interpreted as NaN
+                        return BM_POS_INF;
                 }
+                return BM_NAN;
         }
 }
 
