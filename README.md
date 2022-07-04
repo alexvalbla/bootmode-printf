@@ -30,7 +30,7 @@ The functions asprintf and vasprintf are not implemented: through their argument
 Both "double" and "long double" arguments (via the 'L' length modifier) can be printed.
 Note that "double" is taken to mean a IEEE-754 64-bit floating point number, and "long double" is taken to be a IEEE-754 80-bit extended precision floating point number, padded "on the left side" to 128 bits, i.e:
  -> reading a "double" from left to right: 1 sign bit, 11 exponent bits, 52 mantissa bits. See the IEEE-754 norm.
- -> reading a "long double" from left to right: 48 padding bits, 1 sign bit, 15 exponent bits, 64 mantissa bits (the leading mantissa bit being explicit i nthis case). See the IEEE-754 norm.
+ -> reading a "long double" from left to right: 48 padding bits, 1 sign bit, 15 exponent bits, 64 mantissa bits (the leading mantissa bit being explicit in this case). See the IEEE-754 norm.
 There is no use to setting the precision above 18 or 19 depending on the format (%e, %E, %f, %F, %g or %G) so as not to show more than 19 significant digits (for instance 18 digits after the decimal point when using %e format: e.g. converting a (double) argument with the formating string "%.500e" -> (-)D.DDDDDDDDDDDDDDDDDDe[+/-]XYZ, where each 'D' represents a decimal mantissa digit, and 'XYZ' represents the decimal exponent).
 This is because the conversion algorithm (explained in algorithm.pdf), in the best of cases, cannot give us more than 19 valid decimal digits.
 The conversion algorithm has a (small) margin of error: a relative error of around 10^(-18)
