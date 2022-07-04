@@ -12,7 +12,7 @@ fpclass_t decomposeDouble(char *s, int32_t *E, uint64_t *m, double x) {
         t.f = x;
 
         if (!ARE_SAME_ENDIANNESS_INT_FLT) {
-                int l = sizeof(t.i);
+                int l = 8; // IEEE-754 double: 64 bits = 8 bytes
                 for (int i = 0; i < l/2; i++) {
                         SWAP_BYTES(((char *)(&t.i))[i], ((char *)(&t.i))[l-i-1])
                 }
@@ -54,7 +54,7 @@ fpclass_t decomposeLongDouble(char *s, int32_t *E, uint64_t *m, long double x) {
         t.f = x;
 
         if (!ARE_SAME_ENDIANNESS_INT_FLT) {
-                int l = sizeof(t.i);
+                int l = 10; // IEEE-754 80-bit extended: 80 bit = 10 bytes
                 for (int i = 0; i < l/2; i++) {
                         SWAP_BYTES(((char *)(&t.i))[i], ((char *)(&t.i))[l-i-1])
                 }
