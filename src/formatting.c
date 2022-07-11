@@ -167,14 +167,12 @@ void output_str(bm_output_ctxt *ctxt, bm_va_list ap) {
                 s = bm_va_arg(ap, const char *);
                 if (s == NULL) {
                         s = "(null)";
-                        len = 6;
-                } else {
-                        const char *cursor = s;
-                        while (*cursor) {
-                                ++cursor;
-                        }
-                        len = cursor-s;
                 }
+                const char *cursor = s;
+                while (*cursor) {
+                        ++cursor;
+                }
+                len = cursor-s;
                 if ((flags&FLAG_PREC) && precision < len) {
                         // no more than 'precision' characters should be printed
                         len = precision;
